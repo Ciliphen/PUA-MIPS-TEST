@@ -1,5 +1,5 @@
 TOP_NAME := mycpu_top
-SRC_DIR  := ../../mycpu
+SRC_DIR  := ../mycpu
 INC_FILE := $(shell find $(SRC_DIR) -name '*.svh') $(shell find $(SRC_DIR) -name '*.vh') $(shell find $(SRC_DIR) -name '*.v') $(shell find $(SRC_DIR) -name '*.sv')
 INC_DIR	 := $(addprefix -I, $(shell find $(SRC_DIR) -type d))
 .PHONY: clean
@@ -9,10 +9,11 @@ obj_dir/V$(TOP_NAME): src/* $(INC_FILE)
 
 func: obj_dir/V$(TOP_NAME)
 	./obj_dir/Vmycpu_top -func
-sync:
-	cp /mnt/f/NSCSCC/PUA-MIPS/chisel/generated/PuaMips.v $(SRC_DIR)
 
-ALL: sync obj_dir/V$(TOP_NAME) func
+func: obj_dir/V$(TOP_NAME)
+	./obj_dir/Vmycpu_top -perf
+
+ALL: obj_dir/V$(TOP_NAME) func
 
 clean:
 	rm -rf obj_dir
