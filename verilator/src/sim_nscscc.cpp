@@ -85,7 +85,7 @@ void func_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref) {
     axi4_xbar<32,32,4> mmio(23);
 
     // func mem at 0x1fc00000 and 0x0
-    mmio_mem perf_mem(262144*4, "../../vivado/func_test_v0.01/soft/func/obj/main.bin");
+    mmio_mem perf_mem(262144*4, "../vivado/func_test_v0.01/soft/func/obj/main.bin");
     perf_mem.set_allow_warp(true);
     assert(mmio.add_dev(0x1fc00000,0x100000,&perf_mem));
     assert(mmio.add_dev(0x00000000,0x10000000,&perf_mem));
@@ -95,7 +95,7 @@ void func_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref) {
 
     // confreg at 0x1faf0000
     nscscc_confreg confreg(true);
-    confreg.set_trace_file("../../vivado/func_test_v0.01/cpu132_gettrace/golden_trace.txt");
+    confreg.set_trace_file("../vivado/func_test_v0.01/cpu132_gettrace/golden_trace.txt");
     assert(mmio.add_dev(0x1faf0000,0x10000,&confreg));
 
     // connect Vcd for trace
@@ -155,7 +155,7 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
     axi4_xbar<32,32,4> mmio(axi_fast ? 0 : 23);
 
     // perf mem at 0x1fc00000
-    mmio_mem perf_mem(262144*4, "../../vivado/perf_test_v0.01/soft/perf_func/obj/allbench/inst_data.bin");
+    mmio_mem perf_mem(262144*4, "../vivado/perf_test_v0.01/soft/perf_func/obj/allbench/inst_data.bin");
     assert(mmio.add_dev(0x1fc00000,0x100000,&perf_mem));
 
     // confreg at 0x1faf0000
@@ -220,7 +220,7 @@ void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_star
     // cemu {
     memory_bus cemu_mmio;
     
-    mmio_mem cemu_func_mem(262144*4, "../../vivado/perf_test_v0.01/soft/perf_func/obj/allbench/inst_data.bin");
+    mmio_mem cemu_func_mem(262144*4, "../vivado/perf_test_v0.01/soft/perf_func/obj/allbench/inst_data.bin");
     cemu_func_mem.set_allow_warp(true);
     assert(cemu_mmio.add_dev(0x1fc00000,0x100000  ,&cemu_func_mem));
     assert(cemu_mmio.add_dev(0x00000000,0x10000000,&cemu_func_mem));
@@ -240,7 +240,7 @@ void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_star
     axi4_xbar<32,32,4> mmio(axi_fast ? 0 : 23);
 
     // perf mem at 0x1fc00000
-    mmio_mem perf_mem(262144*4, "../../vivado/perf_test_v0.01/soft/perf_func/obj/allbench/inst_data.bin");
+    mmio_mem perf_mem(262144*4, "../vivado/perf_test_v0.01/soft/perf_func/obj/allbench/inst_data.bin");
     assert(mmio.add_dev(0x1fc00000,0x100000,&perf_mem));
 
     // confreg at 0x1faf0000
