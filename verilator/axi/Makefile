@@ -7,5 +7,12 @@ INC_DIR	 := $(addprefix -I, $(shell find $(SRC_DIR) -type d))
 obj_dir/V$(TOP_NAME): src/* $(INC_FILE)
 	verilator --cc -Wno-fatal --exe --trace --trace-structs --build src/sim_nscscc.cpp $(INC_FILE) $(INC_DIR) --top $(TOP_NAME) -j `nproc`
 
+func: obj_dir/V$(TOP_NAME)
+	./obj_dir/Vmycpu_top -func
+sync:
+	cp /mnt/f/NSCSCC/PUA-MIPS/chisel/generated/PuaMips.v $(SRC_DIR)
+
+ALL: sync obj_dir/V$(TOP_NAME) func
+
 clean:
 	rm -rf obj_dir
