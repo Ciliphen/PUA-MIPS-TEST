@@ -11,7 +11,10 @@ obj_dir/V$(TOP_NAME): src/* $(INC_FILE)
 	verilator --cc -Wno-fatal --exe --trace --trace-structs --build src/sim_nscscc.cpp $(INC_FILE) $(INC_DIR) --top $(TOP_NAME) -j `nproc`
 
 perf: obj_dir/V$(TOP_NAME)
-	./obj_dir/Vmycpu_top -perf
+	./obj_dir/Vmycpu_top -perf 
+
+perfdiff: obj_dir/V$(TOP_NAME)
+	./obj_dir/Vmycpu_top -perfdiff
 
 clean:
 	rm -rf obj_dir

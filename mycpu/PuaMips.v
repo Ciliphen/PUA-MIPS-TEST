@@ -1844,6 +1844,7 @@ module Execute(
   input  [31:0] io_fromDiv_remainder,
   input  [31:0] io_fromMov_out,
   input         io_fromDataMemory_addr_ok,
+  input  [31:0] io_fromDataMemory_rdata,
   input         io_fromDataMemory_data_ok,
   input         io_fromExecuteStage_do_flush,
   input         io_fromExecuteStage_after_ex,
@@ -1922,14 +1923,13 @@ module Execute(
   output [4:0]  io_memoryStage_excode,
   output        io_memoryStage_ex,
   output        io_memoryStage_data_ok,
+  output [31:0] io_memoryStage_data,
   output        io_memoryStage_wait_mem,
   output        io_memoryStage_res_from_mem,
   output        io_memoryStage_tlb_refill,
   output        io_memoryStage_after_tlb,
   output        io_memoryStage_s1_found,
   output [3:0]  io_memoryStage_s1_index,
-  output [6:0]  io_dataMemory_aluop,
-  output [1:0]  io_dataMemory_addrLowBit2,
   output        io_dataMemory_req,
   output        io_dataMemory_wr,
   output [1:0]  io_dataMemory_size,
@@ -1942,32 +1942,34 @@ module Execute(
 `ifdef RANDOMIZE_REG_INIT
   reg [31:0] _RAND_0;
   reg [31:0] _RAND_1;
+  reg [31:0] _RAND_2;
 `endif // RANDOMIZE_REG_INIT
   reg  addr_ok_r; // @[Execute.scala 99:34]
   wire [15:0] _mem_addr_temp_T_3 = io_fromExecuteStage_inst[15] ? 16'hffff : 16'h0; // @[Bitwise.scala 77:12]
   wire [31:0] _mem_addr_temp_T_4 = {_mem_addr_temp_T_3,io_fromExecuteStage_inst[15:0]}; // @[Cat.scala 33:92]
-  wire [31:0] mem_addr_temp = io_fromExecuteStage_reg1 + _mem_addr_temp_T_4; // @[Execute.scala 335:25]
+  wire [31:0] mem_addr_temp = io_fromExecuteStage_reg1 + _mem_addr_temp_T_4; // @[Execute.scala 333:25]
   wire [1:0] addrLowBit2 = mem_addr_temp[1:0]; // @[Execute.scala 102:40]
   wire  _data_sram_req_T_2 = io_fromExecuteStage_mem_we | io_fromExecuteStage_mem_re; // @[Execute.scala 103:61]
-  wire  overflow_ex = io_fromExecuteStage_overflow_inst & io_fromAlu_ov; // @[Execute.scala 470:55]
-  wire  _load_ex_T = io_fromExecuteStage_aluop == 7'h35; // @[Execute.scala 473:25]
-  wire  _load_ex_T_1 = addrLowBit2 != 2'h0; // @[Execute.scala 473:52]
-  wire  _load_ex_T_3 = io_fromExecuteStage_aluop == 7'h32; // @[Execute.scala 474:13]
-  wire  _load_ex_T_4 = io_fromExecuteStage_aluop == 7'h33; // @[Execute.scala 474:36]
-  wire  _load_ex_T_8 = (io_fromExecuteStage_aluop == 7'h32 | io_fromExecuteStage_aluop == 7'h33) & addrLowBit2[0]; // @[Execute.scala 474:52]
-  wire  load_ex = io_fromExecuteStage_aluop == 7'h35 & addrLowBit2 != 2'h0 | _load_ex_T_8; // @[Execute.scala 473:62]
-  wire  _store_ex_T_6 = io_fromExecuteStage_aluop == 7'h3a & addrLowBit2[0]; // @[Execute.scala 476:26]
-  wire  store_ex = io_fromExecuteStage_aluop == 7'h3b & _load_ex_T_1 | _store_ex_T_6; // @[Execute.scala 475:61]
-  wire  mem_ex = load_ex | store_ex; // @[Execute.scala 477:24]
-  wire  _tlb_load_ex_T = io_fromDataMMU_tlb_refill | io_fromDataMMU_tlb_invalid; // @[Execute.scala 479:44]
-  wire  tlb_load_ex = io_fromExecuteStage_mem_re & (io_fromDataMMU_tlb_refill | io_fromDataMMU_tlb_invalid); // @[Execute.scala 479:29]
-  wire  tlb_store_ex = io_fromExecuteStage_mem_we & _tlb_load_ex_T; // @[Execute.scala 480:29]
-  wire  tlb_mod_ex = io_fromExecuteStage_mem_we & io_fromDataMMU_tlb_modified; // @[Execute.scala 482:27]
-  wire  tlb_ex = tlb_load_ex | tlb_store_ex | tlb_mod_ex; // @[Execute.scala 483:48]
-  wire  ex = io_fromExecuteStage_valid & (overflow_ex | mem_ex | io_fromExecuteStage_ds_to_es_ex | tlb_ex); // @[Execute.scala 485:18]
-  wire  no_store = ex | io_fromExecuteStage_after_ex; // @[Execute.scala 295:18]
+  wire  overflow_ex = io_fromExecuteStage_overflow_inst & io_fromAlu_ov; // @[Execute.scala 468:55]
+  wire  _load_ex_T = io_fromExecuteStage_aluop == 7'h35; // @[Execute.scala 471:25]
+  wire  _load_ex_T_1 = addrLowBit2 != 2'h0; // @[Execute.scala 471:52]
+  wire  _load_ex_T_3 = io_fromExecuteStage_aluop == 7'h32; // @[Execute.scala 472:13]
+  wire  _load_ex_T_4 = io_fromExecuteStage_aluop == 7'h33; // @[Execute.scala 472:36]
+  wire  _load_ex_T_8 = (io_fromExecuteStage_aluop == 7'h32 | io_fromExecuteStage_aluop == 7'h33) & addrLowBit2[0]; // @[Execute.scala 472:52]
+  wire  load_ex = io_fromExecuteStage_aluop == 7'h35 & addrLowBit2 != 2'h0 | _load_ex_T_8; // @[Execute.scala 471:62]
+  wire  _store_ex_T_6 = io_fromExecuteStage_aluop == 7'h3a & addrLowBit2[0]; // @[Execute.scala 474:26]
+  wire  store_ex = io_fromExecuteStage_aluop == 7'h3b & _load_ex_T_1 | _store_ex_T_6; // @[Execute.scala 473:61]
+  wire  mem_ex = load_ex | store_ex; // @[Execute.scala 475:24]
+  wire  _tlb_load_ex_T = io_fromDataMMU_tlb_refill | io_fromDataMMU_tlb_invalid; // @[Execute.scala 477:44]
+  wire  tlb_load_ex = io_fromExecuteStage_mem_re & (io_fromDataMMU_tlb_refill | io_fromDataMMU_tlb_invalid); // @[Execute.scala 477:29]
+  wire  tlb_store_ex = io_fromExecuteStage_mem_we & _tlb_load_ex_T; // @[Execute.scala 478:29]
+  wire  tlb_mod_ex = io_fromExecuteStage_mem_we & io_fromDataMMU_tlb_modified; // @[Execute.scala 480:27]
+  wire  tlb_ex = tlb_load_ex | tlb_store_ex | tlb_mod_ex; // @[Execute.scala 481:48]
+  wire  ex = io_fromExecuteStage_valid & (overflow_ex | mem_ex | io_fromExecuteStage_ds_to_es_ex | tlb_ex); // @[Execute.scala 483:18]
+  wire  no_store = ex | io_fromExecuteStage_after_ex; // @[Execute.scala 293:18]
   wire  data_sram_req = io_fromExecuteStage_valid & ~addr_ok_r & (io_fromExecuteStage_mem_we |
     io_fromExecuteStage_mem_re) & ~no_store; // @[Execute.scala 103:72]
+  reg [31:0] data_buff; // @[Execute.scala 109:34]
   reg  data_buff_valid; // @[Execute.scala 110:34]
   wire  _addr_ok_T = data_sram_req & io_fromDataMemory_addr_ok; // @[Execute.scala 111:41]
   wire  addr_ok = data_sram_req & io_fromDataMemory_addr_ok | addr_ok_r; // @[Execute.scala 111:70]
@@ -2026,127 +2028,133 @@ module Execute(
   wire [47:0] _data_sram_wdata_T_36 = _T_14 ? _data_sram_wdata_T_16 : {{16'd0}, _data_sram_wdata_T_34}; // @[Mux.scala 81:58]
   wire [47:0] _data_sram_wdata_T_38 = _T_17 ? {{16'd0}, _data_sram_wdata_T_28} : _data_sram_wdata_T_36; // @[Mux.scala 81:58]
   wire  _io_memoryStage_wait_mem_T = io_fromExecuteStage_valid & addr_ok; // @[Execute.scala 251:46]
-  wire  tlb_refill_ex = (io_fromExecuteStage_mem_re | io_fromExecuteStage_mem_we) & io_fromDataMMU_tlb_refill; // @[Execute.scala 481:39]
-  wire  _data_ok_T = addr_ok & data_sram_data_ok; // @[Execute.scala 290:42]
-  wire  data_ok = data_buff_valid | addr_ok & data_sram_data_ok; // @[Execute.scala 290:30]
-  wire  _T_20 = ~io_fromMemory_allowin; // @[Execute.scala 277:54]
-  wire  _GEN_5 = io_fromMemory_allowin ? 1'h0 : addr_ok_r; // @[Execute.scala 279:37 280:15 99:34]
-  wire  _GEN_6 = _addr_ok_T & ~io_fromMemory_allowin | _GEN_5; // @[Execute.scala 277:78 278:15]
-  wire  _GEN_7 = _data_ok_T & _T_20 | data_buff_valid; // @[Execute.scala 285:70 286:21 110:34]
-  wire  _T_30 = io_fromExecuteStage_aluop == 7'h30 | io_fromExecuteStage_aluop == 7'h31 | _load_ex_T_3; // @[Execute.scala 301:49]
-  wire  _T_34 = _T_30 | _load_ex_T_4 | _load_ex_T; // @[Execute.scala 302:51]
-  wire  _T_38 = _T_34 | io_fromExecuteStage_aluop == 7'h37 | _data_sram_addr_T; // @[Execute.scala 303:51]
-  wire  _T_41 = io_fromExecuteStage_aluop == 7'h39; // @[Execute.scala 305:13]
-  wire  load_op = _T_38 | io_fromExecuteStage_aluop == 7'h34 | _T_41; // @[Execute.scala 304:51]
-  wire  _blk_valid_T_1 = ~io_fromExecuteStage_do_flush; // @[Execute.scala 312:39]
-  wire  ready_go = _data_sram_req_T_2 ? addr_ok | ex : 1'h1; // @[Execute.scala 314:24]
-  wire [31:0] _GEN_12 = io_fromWriteBackStage_whilo ? io_fromWriteBackStage_hi : io_fromHILO_hi; // @[Execute.scala 371:43 372:8 375:8]
-  wire [31:0] _GEN_13 = io_fromWriteBackStage_whilo ? io_fromWriteBackStage_lo : io_fromHILO_lo; // @[Execute.scala 371:43 373:8 376:8]
-  wire [31:0] _GEN_14 = io_fromMemory_whilo ? io_fromMemory_hi : _GEN_12; // @[Execute.scala 368:44 369:8]
-  wire [31:0] _GEN_15 = io_fromMemory_whilo ? io_fromMemory_lo : _GEN_13; // @[Execute.scala 368:44 370:8]
-  wire [31:0] HI = reset ? 32'h0 : _GEN_14; // @[Execute.scala 365:37 366:8]
-  wire [31:0] LO = reset ? 32'h0 : _GEN_15; // @[Execute.scala 365:37 367:8]
+  wire  tlb_refill_ex = (io_fromExecuteStage_mem_re | io_fromExecuteStage_mem_we) & io_fromDataMMU_tlb_refill; // @[Execute.scala 479:39]
+  wire  _data_ok_T = addr_ok & data_sram_data_ok; // @[Execute.scala 288:42]
+  wire  data_ok = data_buff_valid | addr_ok & data_sram_data_ok; // @[Execute.scala 288:30]
+  wire  _T_20 = ~io_fromMemory_allowin; // @[Execute.scala 275:54]
+  wire  _GEN_5 = io_fromMemory_allowin ? 1'h0 : addr_ok_r; // @[Execute.scala 277:37 278:15 99:34]
+  wire  _GEN_6 = _addr_ok_T & ~io_fromMemory_allowin | _GEN_5; // @[Execute.scala 275:78 276:15]
+  wire  _GEN_7 = _data_ok_T & _T_20 | data_buff_valid; // @[Execute.scala 283:70 284:21 110:34]
+  wire  _T_30 = io_fromExecuteStage_aluop == 7'h30 | io_fromExecuteStage_aluop == 7'h31 | _load_ex_T_3; // @[Execute.scala 299:49]
+  wire  _T_34 = _T_30 | _load_ex_T_4 | _load_ex_T; // @[Execute.scala 300:51]
+  wire  _T_38 = _T_34 | io_fromExecuteStage_aluop == 7'h37 | _data_sram_addr_T; // @[Execute.scala 301:51]
+  wire  _T_41 = io_fromExecuteStage_aluop == 7'h39; // @[Execute.scala 303:13]
+  wire  load_op = _T_38 | io_fromExecuteStage_aluop == 7'h34 | _T_41; // @[Execute.scala 302:51]
+  wire  _blk_valid_T_1 = ~io_fromExecuteStage_do_flush; // @[Execute.scala 310:39]
+  wire  ready_go = _data_sram_req_T_2 ? addr_ok | ex : 1'h1; // @[Execute.scala 312:24]
+  wire [31:0] _GEN_12 = io_fromWriteBackStage_whilo ? io_fromWriteBackStage_hi : io_fromHILO_hi; // @[Execute.scala 369:43 370:8 373:8]
+  wire [31:0] _GEN_13 = io_fromWriteBackStage_whilo ? io_fromWriteBackStage_lo : io_fromHILO_lo; // @[Execute.scala 369:43 371:8 374:8]
+  wire [31:0] _GEN_14 = io_fromMemory_whilo ? io_fromMemory_hi : _GEN_12; // @[Execute.scala 366:44 367:8]
+  wire [31:0] _GEN_15 = io_fromMemory_whilo ? io_fromMemory_lo : _GEN_13; // @[Execute.scala 366:44 368:8]
+  wire [31:0] HI = reset ? 32'h0 : _GEN_14; // @[Execute.scala 363:37 364:8]
+  wire [31:0] LO = reset ? 32'h0 : _GEN_15; // @[Execute.scala 363:37 365:8]
   wire [31:0] _reg_wdata_T_2 = 3'h0 == io_fromExecuteStage_alusel ? io_fromAlu_out : 32'h0; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_4 = 3'h1 == io_fromExecuteStage_alusel ? io_fromAlu_out : _reg_wdata_T_2; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_6 = 3'h3 == io_fromExecuteStage_alusel ? io_fromMov_out : _reg_wdata_T_4; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_8 = 3'h5 == io_fromExecuteStage_alusel ? io_fromMul_out[31:0] : _reg_wdata_T_6; // @[Mux.scala 81:58]
-  wire  _T_74 = io_fromExecuteStage_aluop == 7'h10; // @[Execute.scala 460:20]
-  wire [31:0] _GEN_45 = io_fromExecuteStage_aluop == 7'h10 ? HI : 32'h0; // @[Execute.scala 460:37 462:11 466:11]
-  wire [31:0] _GEN_46 = io_fromExecuteStage_aluop == 7'h10 ? io_fromExecuteStage_reg1 : 32'h0; // @[Execute.scala 460:37 463:11 467:11]
-  wire  _GEN_47 = io_fromExecuteStage_aluop == 7'he | _T_74; // @[Execute.scala 456:37 457:11]
-  wire [31:0] _GEN_48 = io_fromExecuteStage_aluop == 7'he ? io_fromExecuteStage_reg1 : _GEN_45; // @[Execute.scala 456:37 458:11]
-  wire [31:0] _GEN_49 = io_fromExecuteStage_aluop == 7'he ? LO : _GEN_46; // @[Execute.scala 456:37 459:11]
-  wire  _GEN_50 = io_fromExecuteStage_aluop == 7'h22 | io_fromExecuteStage_aluop == 7'h23 | _GEN_47; // @[Execute.scala 452:65 453:11]
+  wire  _T_74 = io_fromExecuteStage_aluop == 7'h10; // @[Execute.scala 458:20]
+  wire [31:0] _GEN_45 = io_fromExecuteStage_aluop == 7'h10 ? HI : 32'h0; // @[Execute.scala 458:37 460:11 464:11]
+  wire [31:0] _GEN_46 = io_fromExecuteStage_aluop == 7'h10 ? io_fromExecuteStage_reg1 : 32'h0; // @[Execute.scala 458:37 461:11 465:11]
+  wire  _GEN_47 = io_fromExecuteStage_aluop == 7'he | _T_74; // @[Execute.scala 454:37 455:11]
+  wire [31:0] _GEN_48 = io_fromExecuteStage_aluop == 7'he ? io_fromExecuteStage_reg1 : _GEN_45; // @[Execute.scala 454:37 456:11]
+  wire [31:0] _GEN_49 = io_fromExecuteStage_aluop == 7'he ? LO : _GEN_46; // @[Execute.scala 454:37 457:11]
+  wire  _GEN_50 = io_fromExecuteStage_aluop == 7'h22 | io_fromExecuteStage_aluop == 7'h23 | _GEN_47; // @[Execute.scala 450:65 451:11]
   wire [31:0] _GEN_51 = io_fromExecuteStage_aluop == 7'h22 | io_fromExecuteStage_aluop == 7'h23 ? io_fromDiv_remainder
-     : _GEN_48; // @[Execute.scala 452:65 454:11]
+     : _GEN_48; // @[Execute.scala 450:65 452:11]
   wire [31:0] _GEN_52 = io_fromExecuteStage_aluop == 7'h22 | io_fromExecuteStage_aluop == 7'h23 ? io_fromDiv_quotient :
-    _GEN_49; // @[Execute.scala 452:65 455:11]
-  wire  _GEN_53 = io_fromExecuteStage_aluop == 7'h20 | io_fromExecuteStage_aluop == 7'h21 | _GEN_50; // @[Execute.scala 448:67 449:11]
-  wire [31:0] _GEN_54 = io_fromExecuteStage_aluop == 7'h20 | io_fromExecuteStage_aluop == 7'h21 ? 32'h0 : _GEN_51; // @[Execute.scala 448:67 450:11]
-  wire [31:0] _GEN_55 = io_fromExecuteStage_aluop == 7'h20 | io_fromExecuteStage_aluop == 7'h21 ? 32'h0 : _GEN_52; // @[Execute.scala 448:67 451:11]
-  wire  _GEN_56 = io_fromExecuteStage_aluop == 7'h1e | io_fromExecuteStage_aluop == 7'h1f | _GEN_53; // @[Execute.scala 444:67 445:11]
-  wire [31:0] _GEN_57 = io_fromExecuteStage_aluop == 7'h1e | io_fromExecuteStage_aluop == 7'h1f ? 32'h0 : _GEN_54; // @[Execute.scala 444:67 446:11]
-  wire [31:0] _GEN_58 = io_fromExecuteStage_aluop == 7'h1e | io_fromExecuteStage_aluop == 7'h1f ? 32'h0 : _GEN_55; // @[Execute.scala 444:67 447:11]
-  wire  _GEN_59 = io_fromExecuteStage_aluop == 7'h1b | io_fromExecuteStage_aluop == 7'h1c | _GEN_56; // @[Execute.scala 440:67 441:11]
+    _GEN_49; // @[Execute.scala 450:65 453:11]
+  wire  _GEN_53 = io_fromExecuteStage_aluop == 7'h20 | io_fromExecuteStage_aluop == 7'h21 | _GEN_50; // @[Execute.scala 446:67 447:11]
+  wire [31:0] _GEN_54 = io_fromExecuteStage_aluop == 7'h20 | io_fromExecuteStage_aluop == 7'h21 ? 32'h0 : _GEN_51; // @[Execute.scala 446:67 448:11]
+  wire [31:0] _GEN_55 = io_fromExecuteStage_aluop == 7'h20 | io_fromExecuteStage_aluop == 7'h21 ? 32'h0 : _GEN_52; // @[Execute.scala 446:67 449:11]
+  wire  _GEN_56 = io_fromExecuteStage_aluop == 7'h1e | io_fromExecuteStage_aluop == 7'h1f | _GEN_53; // @[Execute.scala 442:67 443:11]
+  wire [31:0] _GEN_57 = io_fromExecuteStage_aluop == 7'h1e | io_fromExecuteStage_aluop == 7'h1f ? 32'h0 : _GEN_54; // @[Execute.scala 442:67 444:11]
+  wire [31:0] _GEN_58 = io_fromExecuteStage_aluop == 7'h1e | io_fromExecuteStage_aluop == 7'h1f ? 32'h0 : _GEN_55; // @[Execute.scala 442:67 445:11]
+  wire  _GEN_59 = io_fromExecuteStage_aluop == 7'h1b | io_fromExecuteStage_aluop == 7'h1c | _GEN_56; // @[Execute.scala 438:67 439:11]
   wire [31:0] _GEN_60 = io_fromExecuteStage_aluop == 7'h1b | io_fromExecuteStage_aluop == 7'h1c ? io_fromMul_out[63:32]
-     : _GEN_57; // @[Execute.scala 440:67 442:11]
+     : _GEN_57; // @[Execute.scala 438:67 440:11]
   wire [31:0] _GEN_61 = io_fromExecuteStage_aluop == 7'h1b | io_fromExecuteStage_aluop == 7'h1c ? io_fromMul_out[31:0]
-     : _GEN_58; // @[Execute.scala 440:67 443:11]
+     : _GEN_58; // @[Execute.scala 438:67 441:11]
   wire [4:0] _excode_T = tlb_mod_ex ? 5'h1 : io_fromExecuteStage_excode; // @[Mux.scala 101:16]
   wire [4:0] _excode_T_1 = tlb_store_ex ? 5'h3 : _excode_T; // @[Mux.scala 101:16]
   wire [4:0] _excode_T_2 = tlb_load_ex ? 5'h2 : _excode_T_1; // @[Mux.scala 101:16]
   wire [4:0] _excode_T_3 = store_ex ? 5'h5 : _excode_T_2; // @[Mux.scala 101:16]
   wire [4:0] _excode_T_4 = load_ex ? 5'h4 : _excode_T_3; // @[Mux.scala 101:16]
   wire [4:0] _excode_T_5 = overflow_ex ? 5'hc : _excode_T_4; // @[Mux.scala 101:16]
-  wire  _badvaddr_T_2 = io_fromExecuteStage_excode == 5'h4 | io_fromExecuteStage_excode == 5'h2; // @[Execute.scala 501:44]
-  assign io_alu_op = io_fromExecuteStage_aluop; // @[Execute.scala 340:14]
-  assign io_alu_in1 = io_fromExecuteStage_reg1; // @[Execute.scala 341:14]
-  assign io_alu_in2 = io_fromExecuteStage_reg2; // @[Execute.scala 342:14]
-  assign io_mul_op = io_fromExecuteStage_aluop; // @[Execute.scala 347:14]
-  assign io_mul_in1 = io_fromExecuteStage_reg1; // @[Execute.scala 348:14]
-  assign io_mul_in2 = io_fromExecuteStage_reg2; // @[Execute.scala 349:14]
-  assign io_div_op = io_fromExecuteStage_aluop; // @[Execute.scala 352:19]
-  assign io_div_divisor = io_fromExecuteStage_reg1; // @[Execute.scala 353:19]
-  assign io_div_dividend = io_fromExecuteStage_reg2; // @[Execute.scala 354:19]
-  assign io_mov_op = io_fromExecuteStage_aluop; // @[Execute.scala 358:15]
-  assign io_mov_inst = io_fromExecuteStage_inst; // @[Execute.scala 360:15]
-  assign io_mov_in = io_fromExecuteStage_reg1; // @[Execute.scala 359:15]
-  assign io_mov_hi = reset ? 32'h0 : _GEN_14; // @[Execute.scala 365:37 366:8]
-  assign io_mov_lo = reset ? 32'h0 : _GEN_15; // @[Execute.scala 365:37 367:8]
+  wire  _badvaddr_T_2 = io_fromExecuteStage_excode == 5'h4 | io_fromExecuteStage_excode == 5'h2; // @[Execute.scala 499:44]
+  assign io_alu_op = io_fromExecuteStage_aluop; // @[Execute.scala 338:14]
+  assign io_alu_in1 = io_fromExecuteStage_reg1; // @[Execute.scala 339:14]
+  assign io_alu_in2 = io_fromExecuteStage_reg2; // @[Execute.scala 340:14]
+  assign io_mul_op = io_fromExecuteStage_aluop; // @[Execute.scala 345:14]
+  assign io_mul_in1 = io_fromExecuteStage_reg1; // @[Execute.scala 346:14]
+  assign io_mul_in2 = io_fromExecuteStage_reg2; // @[Execute.scala 347:14]
+  assign io_div_op = io_fromExecuteStage_aluop; // @[Execute.scala 350:19]
+  assign io_div_divisor = io_fromExecuteStage_reg1; // @[Execute.scala 351:19]
+  assign io_div_dividend = io_fromExecuteStage_reg2; // @[Execute.scala 352:19]
+  assign io_mov_op = io_fromExecuteStage_aluop; // @[Execute.scala 356:15]
+  assign io_mov_inst = io_fromExecuteStage_inst; // @[Execute.scala 358:15]
+  assign io_mov_in = io_fromExecuteStage_reg1; // @[Execute.scala 357:15]
+  assign io_mov_hi = reset ? 32'h0 : _GEN_14; // @[Execute.scala 363:37 364:8]
+  assign io_mov_lo = reset ? 32'h0 : _GEN_15; // @[Execute.scala 363:37 365:8]
   assign io_decoder_reg_waddr = io_fromExecuteStage_reg_waddr; // @[Execute.scala 228:27]
   assign io_decoder_reg_wdata = 3'h6 == io_fromExecuteStage_alusel ? io_fromExecuteStage_link_addr : _reg_wdata_T_8; // @[Mux.scala 81:58]
-  assign io_decoder_reg_wen = io_fromAlu_ov ? 4'h0 : io_fromExecuteStage_reg_wen; // @[Execute.scala 422:17]
-  assign io_decoder_allowin = ~io_fromExecuteStage_valid | ready_go & io_fromMemory_allowin; // @[Execute.scala 315:31]
-  assign io_decoder_blk_valid = io_fromExecuteStage_valid & load_op & ~io_fromExecuteStage_do_flush; // @[Execute.scala 312:36]
+  assign io_decoder_reg_wen = io_fromAlu_ov ? 4'h0 : io_fromExecuteStage_reg_wen; // @[Execute.scala 420:17]
+  assign io_decoder_allowin = ~io_fromExecuteStage_valid | ready_go & io_fromMemory_allowin; // @[Execute.scala 313:31]
+  assign io_decoder_blk_valid = io_fromExecuteStage_valid & load_op & ~io_fromExecuteStage_do_flush; // @[Execute.scala 310:36]
   assign io_decoder_inst_is_mfc0 = io_fromExecuteStage_valid & io_fromExecuteStage_aluop == 7'h11; // @[Execute.scala 233:56]
-  assign io_decoder_es_fwd_valid = io_fromExecuteStage_valid; // @[Execute.scala 318:16 91:28]
+  assign io_decoder_es_fwd_valid = io_fromExecuteStage_valid; // @[Execute.scala 316:16 91:28]
   assign io_dataMMU_vaddr = _data_sram_addr_T_2 ? _data_sram_addr_T_4 : mem_addr_temp; // @[Execute.scala 136:24]
-  assign io_dataMMU_inst_is_tlbp = io_fromExecuteStage_aluop == 7'h48; // @[Execute.scala 273:36]
+  assign io_dataMMU_inst_is_tlbp = io_fromExecuteStage_aluop == 7'h48; // @[Execute.scala 271:36]
   assign io_memoryStage_aluop = io_fromExecuteStage_aluop; // @[Execute.scala 244:34]
-  assign io_memoryStage_hi = reset ? 32'h0 : _GEN_60; // @[Execute.scala 436:37 438:11]
-  assign io_memoryStage_lo = reset ? 32'h0 : _GEN_61; // @[Execute.scala 436:37 439:11]
+  assign io_memoryStage_hi = reset ? 32'h0 : _GEN_60; // @[Execute.scala 434:37 436:11]
+  assign io_memoryStage_lo = reset ? 32'h0 : _GEN_61; // @[Execute.scala 434:37 437:11]
   assign io_memoryStage_reg2 = io_fromExecuteStage_reg2; // @[Execute.scala 245:34]
   assign io_memoryStage_reg_waddr = io_fromExecuteStage_reg_waddr; // @[Execute.scala 238:34]
   assign io_memoryStage_reg_wdata = 3'h6 == io_fromExecuteStage_alusel ? io_fromExecuteStage_link_addr : _reg_wdata_T_8; // @[Mux.scala 81:58]
-  assign io_memoryStage_whilo = reset ? 1'h0 : _GEN_59; // @[Execute.scala 436:37 437:11]
-  assign io_memoryStage_reg_wen = io_fromAlu_ov ? 4'h0 : io_fromExecuteStage_reg_wen; // @[Execute.scala 422:17]
+  assign io_memoryStage_whilo = reset ? 1'h0 : _GEN_59; // @[Execute.scala 434:37 435:11]
+  assign io_memoryStage_reg_wen = io_fromAlu_ov ? 4'h0 : io_fromExecuteStage_reg_wen; // @[Execute.scala 420:17]
   assign io_memoryStage_pc = io_fromExecuteStage_pc; // @[Execute.scala 219:27]
-  assign io_memoryStage_valid = io_fromExecuteStage_valid & ready_go & _blk_valid_T_1; // @[Execute.scala 316:42]
-  assign io_memoryStage_mem_addr = io_fromExecuteStage_reg1 + _mem_addr_temp_T_4; // @[Execute.scala 335:25]
+  assign io_memoryStage_valid = io_fromExecuteStage_valid & ready_go & _blk_valid_T_1; // @[Execute.scala 314:42]
+  assign io_memoryStage_mem_addr = io_fromExecuteStage_reg1 + _mem_addr_temp_T_4; // @[Execute.scala 333:25]
   assign io_memoryStage_bd = io_fromExecuteStage_bd; // @[Execute.scala 221:27]
-  assign io_memoryStage_badvaddr = _badvaddr_T_2 ? io_fromExecuteStage_badvaddr : mem_addr_temp; // @[Execute.scala 500:18]
+  assign io_memoryStage_badvaddr = _badvaddr_T_2 ? io_fromExecuteStage_badvaddr : mem_addr_temp; // @[Execute.scala 498:18]
   assign io_memoryStage_cp0_addr = io_fromExecuteStage_cp0_addr; // @[Execute.scala 223:27]
   assign io_memoryStage_excode = io_fromExecuteStage_ds_to_es_ex ? io_fromExecuteStage_excode : _excode_T_5; // @[Mux.scala 101:16]
   assign io_memoryStage_ex = io_fromExecuteStage_valid & (overflow_ex | mem_ex | io_fromExecuteStage_ds_to_es_ex |
-    tlb_ex); // @[Execute.scala 485:18]
-  assign io_memoryStage_data_ok = data_buff_valid | addr_ok & data_sram_data_ok; // @[Execute.scala 290:30]
+    tlb_ex); // @[Execute.scala 483:18]
+  assign io_memoryStage_data_ok = data_buff_valid | addr_ok & data_sram_data_ok; // @[Execute.scala 288:30]
+  assign io_memoryStage_data = data_buff_valid ? data_buff : io_fromDataMemory_rdata; // @[Execute.scala 289:17]
   assign io_memoryStage_wait_mem = io_fromExecuteStage_valid & addr_ok; // @[Execute.scala 251:46]
   assign io_memoryStage_res_from_mem = io_fromExecuteStage_mem_re; // @[Execute.scala 252:34]
   assign io_memoryStage_tlb_refill = io_fromExecuteStage_tlb_refill | tlb_refill_ex; // @[Execute.scala 253:51]
   assign io_memoryStage_after_tlb = io_fromExecuteStage_after_tlb; // @[Execute.scala 254:34]
   assign io_memoryStage_s1_found = io_fromTLB_s1_found; // @[Execute.scala 255:34]
   assign io_memoryStage_s1_index = io_fromTLB_s1_index; // @[Execute.scala 256:34]
-  assign io_dataMemory_aluop = io_fromExecuteStage_aluop; // @[Execute.scala 263:29]
-  assign io_dataMemory_addrLowBit2 = mem_addr_temp[1:0]; // @[Execute.scala 102:40]
   assign io_dataMemory_req = io_fromExecuteStage_valid & ~addr_ok_r & (io_fromExecuteStage_mem_we |
     io_fromExecuteStage_mem_re) & ~no_store; // @[Execute.scala 103:72]
-  assign io_dataMemory_wr = io_fromExecuteStage_mem_we; // @[Execute.scala 266:29]
+  assign io_dataMemory_wr = io_fromExecuteStage_mem_we; // @[Execute.scala 264:25]
   assign io_dataMemory_size = 7'h35 == io_fromExecuteStage_aluop | 7'h3b == io_fromExecuteStage_aluop ? 2'h2 : _GEN_3; // @[Execute.scala 117:17 119:22]
   assign io_dataMemory_wdata = _data_sram_wdata_T_38[31:0]; // @[Execute.scala 108:31 189:19]
   assign io_dataMemory_wstrb = _T_17 ? _data_sram_wstrb_T_21 : _data_sram_wstrb_T_27; // @[Mux.scala 81:58]
-  assign io_dataMemory_waiting = _io_memoryStage_wait_mem_T & ~data_ok; // @[Execute.scala 270:52]
-  assign io_executeStage_allowin = ~io_fromExecuteStage_valid | ready_go & io_fromMemory_allowin; // @[Execute.scala 315:31]
-  assign io_ctrl_ex = io_fromExecuteStage_valid & (overflow_ex | mem_ex | io_fromExecuteStage_ds_to_es_ex | tlb_ex); // @[Execute.scala 485:18]
+  assign io_dataMemory_waiting = _io_memoryStage_wait_mem_T & ~data_ok; // @[Execute.scala 268:48]
+  assign io_executeStage_allowin = ~io_fromExecuteStage_valid | ready_go & io_fromMemory_allowin; // @[Execute.scala 313:31]
+  assign io_ctrl_ex = io_fromExecuteStage_valid & (overflow_ex | mem_ex | io_fromExecuteStage_ds_to_es_ex | tlb_ex); // @[Execute.scala 483:18]
   always @(posedge clock) begin
     if (reset) begin // @[Execute.scala 99:34]
       addr_ok_r <= 1'h0; // @[Execute.scala 99:34]
     end else begin
       addr_ok_r <= _GEN_6;
     end
+    if (reset) begin // @[Execute.scala 109:34]
+      data_buff <= 32'h0; // @[Execute.scala 109:34]
+    end else if (io_fromMemory_allowin | no_store) begin // @[Execute.scala 280:43]
+      data_buff <= 32'h0; // @[Execute.scala 282:21]
+    end else if (_data_ok_T & _T_20) begin // @[Execute.scala 283:70]
+      data_buff <= io_fromDataMemory_rdata; // @[Execute.scala 285:21]
+    end
     if (reset) begin // @[Execute.scala 110:34]
       data_buff_valid <= 1'h0; // @[Execute.scala 110:34]
-    end else if (io_fromMemory_allowin | no_store) begin // @[Execute.scala 282:43]
-      data_buff_valid <= 1'h0; // @[Execute.scala 283:21]
+    end else if (io_fromMemory_allowin | no_store) begin // @[Execute.scala 280:43]
+      data_buff_valid <= 1'h0; // @[Execute.scala 281:21]
     end else begin
       data_buff_valid <= _GEN_7;
     end
@@ -2190,7 +2198,9 @@ initial begin
   _RAND_0 = {1{`RANDOM}};
   addr_ok_r = _RAND_0[0:0];
   _RAND_1 = {1{`RANDOM}};
-  data_buff_valid = _RAND_1[0:0];
+  data_buff = _RAND_1[31:0];
+  _RAND_2 = {1{`RANDOM}};
+  data_buff_valid = _RAND_2[0:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
@@ -2460,8 +2470,6 @@ endmodule
 module DataMemory(
   input         clock,
   input         reset,
-  input  [6:0]  io_fromExecute_aluop,
-  input  [1:0]  io_fromExecute_addrLowBit2,
   input         io_fromExecute_req,
   input         io_fromExecute_wr,
   input  [1:0]  io_fromExecute_size,
@@ -2472,6 +2480,7 @@ module DataMemory(
   input         io_fromCtrl_do_flush,
   input  [31:0] io_fromDataMMU_paddr,
   output        io_execute_addr_ok,
+  output [31:0] io_execute_rdata,
   output        io_execute_data_ok,
   output        io_memory_data_ok,
   output [31:0] io_memory_rdata,
@@ -2488,48 +2497,31 @@ module DataMemory(
 );
 `ifdef RANDOMIZE_REG_INIT
   reg [31:0] _RAND_0;
-  reg [31:0] _RAND_1;
 `endif // RANDOMIZE_REG_INIT
-  wire [15:0] _read_mask_T_1 = 2'h1 == io_fromExecute_addrLowBit2 ? 16'hff00 : 16'hff; // @[Mux.scala 81:58]
-  wire [23:0] _read_mask_T_3 = 2'h2 == io_fromExecute_addrLowBit2 ? 24'hff0000 : {{8'd0}, _read_mask_T_1}; // @[Mux.scala 81:58]
-  wire [31:0] _read_mask_T_5 = 2'h3 == io_fromExecute_addrLowBit2 ? 32'hff000000 : {{8'd0}, _read_mask_T_3}; // @[Mux.scala 81:58]
-  wire [31:0] _read_mask_T_13 = 2'h0 == io_fromExecute_addrLowBit2 ? 32'hffff : 32'hffffffff; // @[Mux.scala 81:58]
-  wire [31:0] _read_mask_T_15 = 2'h2 == io_fromExecute_addrLowBit2 ? 32'hffff0000 : _read_mask_T_13; // @[Mux.scala 81:58]
-  reg [31:0] read_mask_next; // @[DataMemory.scala 76:31]
-  reg [1:0] data_sram_discard; // @[DataMemory.scala 78:42]
-  wire  _data_sram_data_ok_discard_T_1 = ~(|data_sram_discard); // @[DataMemory.scala 79:46]
+  reg [1:0] data_sram_discard; // @[DataMemory.scala 32:42]
+  wire  _data_sram_data_ok_discard_T_1 = ~(|data_sram_discard); // @[DataMemory.scala 33:46]
   wire [1:0] _data_sram_discard_T = {io_fromExecute_waiting,io_fromMemory_waiting}; // @[Cat.scala 33:92]
-  wire [1:0] _GEN_0 = data_sram_discard == 2'h1 | data_sram_discard == 2'h2 ? 2'h0 : data_sram_discard; // @[DataMemory.scala 100:25 78:42 99:72]
-  assign io_execute_addr_ok = io_sramAXITrans_addr_ok; // @[DataMemory.scala 90:29]
-  assign io_execute_data_ok = _data_sram_data_ok_discard_T_1 & io_sramAXITrans_data_ok; // @[DataMemory.scala 91:55]
-  assign io_memory_data_ok = _data_sram_data_ok_discard_T_1 & io_sramAXITrans_data_ok; // @[DataMemory.scala 88:55]
-  assign io_memory_rdata = io_sramAXITrans_rdata & read_mask_next; // @[DataMemory.scala 87:38]
-  assign io_sramAXITrans_req = io_fromExecute_req; // @[DataMemory.scala 81:29]
-  assign io_sramAXITrans_wr = io_fromExecute_wr; // @[DataMemory.scala 82:29]
-  assign io_sramAXITrans_size = io_fromExecute_size; // @[DataMemory.scala 83:29]
-  assign io_sramAXITrans_addr = io_fromDataMMU_paddr; // @[DataMemory.scala 84:29]
-  assign io_sramAXITrans_wstrb = io_fromExecute_wstrb; // @[DataMemory.scala 85:29]
-  assign io_sramAXITrans_wdata = io_fromExecute_wdata; // @[DataMemory.scala 86:29]
-  assign io_ctrl_data_sram_discard = data_sram_discard; // @[DataMemory.scala 92:29]
+  wire [1:0] _GEN_0 = data_sram_discard == 2'h1 | data_sram_discard == 2'h2 ? 2'h0 : data_sram_discard; // @[DataMemory.scala 53:72 54:25 32:42]
+  assign io_execute_addr_ok = io_sramAXITrans_addr_ok; // @[DataMemory.scala 44:29]
+  assign io_execute_rdata = io_sramAXITrans_rdata; // @[DataMemory.scala 43:29]
+  assign io_execute_data_ok = _data_sram_data_ok_discard_T_1 & io_sramAXITrans_data_ok; // @[DataMemory.scala 45:55]
+  assign io_memory_data_ok = _data_sram_data_ok_discard_T_1 & io_sramAXITrans_data_ok; // @[DataMemory.scala 42:55]
+  assign io_memory_rdata = io_sramAXITrans_rdata; // @[DataMemory.scala 41:29]
+  assign io_sramAXITrans_req = io_fromExecute_req; // @[DataMemory.scala 35:29]
+  assign io_sramAXITrans_wr = io_fromExecute_wr; // @[DataMemory.scala 36:29]
+  assign io_sramAXITrans_size = io_fromExecute_size; // @[DataMemory.scala 37:29]
+  assign io_sramAXITrans_addr = io_fromDataMMU_paddr; // @[DataMemory.scala 38:29]
+  assign io_sramAXITrans_wstrb = io_fromExecute_wstrb; // @[DataMemory.scala 39:29]
+  assign io_sramAXITrans_wdata = io_fromExecute_wdata; // @[DataMemory.scala 40:29]
+  assign io_ctrl_data_sram_discard = data_sram_discard; // @[DataMemory.scala 46:29]
   always @(posedge clock) begin
-    if (7'h33 == io_fromExecute_aluop) begin // @[Mux.scala 81:58]
-      read_mask_next <= _read_mask_T_15;
-    end else if (7'h32 == io_fromExecute_aluop) begin // @[Mux.scala 81:58]
-      read_mask_next <= _read_mask_T_15;
-    end else if (7'h31 == io_fromExecute_aluop) begin // @[Mux.scala 81:58]
-      read_mask_next <= _read_mask_T_5;
-    end else if (7'h30 == io_fromExecute_aluop) begin // @[Mux.scala 81:58]
-      read_mask_next <= _read_mask_T_5;
-    end else begin
-      read_mask_next <= 32'hffffffff;
-    end
-    if (reset) begin // @[DataMemory.scala 78:42]
-      data_sram_discard <= 2'h0; // @[DataMemory.scala 78:42]
-    end else if (io_fromCtrl_do_flush) begin // @[DataMemory.scala 94:30]
-      data_sram_discard <= _data_sram_discard_T; // @[DataMemory.scala 95:23]
-    end else if (io_sramAXITrans_data_ok) begin // @[DataMemory.scala 96:23]
-      if (data_sram_discard == 2'h3) begin // @[DataMemory.scala 97:37]
-        data_sram_discard <= 2'h1; // @[DataMemory.scala 98:25]
+    if (reset) begin // @[DataMemory.scala 32:42]
+      data_sram_discard <= 2'h0; // @[DataMemory.scala 32:42]
+    end else if (io_fromCtrl_do_flush) begin // @[DataMemory.scala 48:30]
+      data_sram_discard <= _data_sram_discard_T; // @[DataMemory.scala 49:23]
+    end else if (io_sramAXITrans_data_ok) begin // @[DataMemory.scala 50:23]
+      if (data_sram_discard == 2'h3) begin // @[DataMemory.scala 51:37]
+        data_sram_discard <= 2'h1; // @[DataMemory.scala 52:25]
       end else begin
         data_sram_discard <= _GEN_0;
       end
@@ -2572,9 +2564,7 @@ initial begin
     `endif
 `ifdef RANDOMIZE_REG_INIT
   _RAND_0 = {1{`RANDOM}};
-  read_mask_next = _RAND_0[31:0];
-  _RAND_1 = {1{`RANDOM}};
-  data_sram_discard = _RAND_1[1:0];
+  data_sram_discard = _RAND_0[1:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
@@ -3617,6 +3607,7 @@ module MemoryStage(
   input  [4:0]  io_fromExecute_excode,
   input         io_fromExecute_ex,
   input         io_fromExecute_data_ok,
+  input  [31:0] io_fromExecute_data,
   input         io_fromExecute_wait_mem,
   input         io_fromExecute_res_from_mem,
   input         io_fromExecute_tlb_refill,
@@ -3643,6 +3634,7 @@ module MemoryStage(
   output [4:0]  io_memory_excode,
   output        io_memory_ex,
   output        io_memory_data_ok,
+  output [31:0] io_memory_data,
   output        io_memory_wait_mem,
   output        io_memory_res_from_mem,
   output        io_memory_tlb_refill,
@@ -3674,6 +3666,7 @@ module MemoryStage(
   reg [31:0] _RAND_20;
   reg [31:0] _RAND_21;
   reg [31:0] _RAND_22;
+  reg [31:0] _RAND_23;
 `endif // RANDOMIZE_REG_INIT
   reg [31:0] pc; // @[MemoryStage.scala 23:32]
   reg [4:0] reg_waddr; // @[MemoryStage.scala 24:32]
@@ -3692,6 +3685,7 @@ module MemoryStage(
   reg [7:0] cp0_addr; // @[MemoryStage.scala 40:32]
   reg [4:0] excode; // @[MemoryStage.scala 41:32]
   reg  data_ok; // @[MemoryStage.scala 42:32]
+  reg [31:0] data; // @[MemoryStage.scala 43:32]
   reg  wait_mem; // @[MemoryStage.scala 44:32]
   reg  res_from_mem; // @[MemoryStage.scala 45:32]
   reg  tlb_refill; // @[MemoryStage.scala 46:32]
@@ -3716,6 +3710,7 @@ module MemoryStage(
   assign io_memory_excode = excode; // @[MemoryStage.scala 66:29]
   assign io_memory_ex = ex; // @[MemoryStage.scala 62:29]
   assign io_memory_data_ok = data_ok; // @[MemoryStage.scala 67:29]
+  assign io_memory_data = data; // @[MemoryStage.scala 68:29]
   assign io_memory_wait_mem = wait_mem; // @[MemoryStage.scala 69:29]
   assign io_memory_res_from_mem = res_from_mem; // @[MemoryStage.scala 70:29]
   assign io_memory_tlb_refill = tlb_refill; // @[MemoryStage.scala 76:29]
@@ -3809,6 +3804,11 @@ module MemoryStage(
       data_ok <= 1'h0; // @[MemoryStage.scala 42:32]
     end else if (io_fromExecute_valid & io_fromMemory_allowin) begin // @[MemoryStage.scala 89:55]
       data_ok <= io_fromExecute_data_ok; // @[MemoryStage.scala 108:21]
+    end
+    if (reset) begin // @[MemoryStage.scala 43:32]
+      data <= 32'h0; // @[MemoryStage.scala 43:32]
+    end else if (io_fromExecute_valid & io_fromMemory_allowin) begin // @[MemoryStage.scala 89:55]
+      data <= io_fromExecute_data; // @[MemoryStage.scala 109:21]
     end
     if (reset) begin // @[MemoryStage.scala 44:32]
       wait_mem <= 1'h0; // @[MemoryStage.scala 44:32]
@@ -3912,17 +3912,19 @@ initial begin
   _RAND_16 = {1{`RANDOM}};
   data_ok = _RAND_16[0:0];
   _RAND_17 = {1{`RANDOM}};
-  wait_mem = _RAND_17[0:0];
+  data = _RAND_17[31:0];
   _RAND_18 = {1{`RANDOM}};
-  res_from_mem = _RAND_18[0:0];
+  wait_mem = _RAND_18[0:0];
   _RAND_19 = {1{`RANDOM}};
-  tlb_refill = _RAND_19[0:0];
+  res_from_mem = _RAND_19[0:0];
   _RAND_20 = {1{`RANDOM}};
-  after_tlb = _RAND_20[0:0];
+  tlb_refill = _RAND_20[0:0];
   _RAND_21 = {1{`RANDOM}};
-  s1_found = _RAND_21[0:0];
+  after_tlb = _RAND_21[0:0];
   _RAND_22 = {1{`RANDOM}};
-  s1_index = _RAND_22[3:0];
+  s1_found = _RAND_22[0:0];
+  _RAND_23 = {1{`RANDOM}};
+  s1_index = _RAND_23[3:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
@@ -3951,6 +3953,7 @@ module Memory(
   input  [4:0]  io_fromMemoryStage_excode,
   input         io_fromMemoryStage_ex,
   input         io_fromMemoryStage_data_ok,
+  input  [31:0] io_fromMemoryStage_data,
   input         io_fromMemoryStage_wait_mem,
   input         io_fromMemoryStage_res_from_mem,
   input         io_fromMemoryStage_tlb_refill,
@@ -4000,14 +4003,15 @@ module Memory(
   output [3:0]  io_writeBackStage_s1_index,
   output        io_ctrl_ex
 );
-  wire  whilo = reset ? 1'h0 : io_fromMemoryStage_whilo; // @[Memory.scala 157:37 163:15 172:15]
-  wire  data_ok = io_fromMemoryStage_data_ok | io_fromMemoryStage_wait_mem & io_fromDataMemory_data_ok; // @[Memory.scala 93:54]
-  wire  ready_go = io_fromMemoryStage_wait_mem ? data_ok : 1'h1; // @[Memory.scala 148:21]
-  wire  _ms_to_ws_valid_T_1 = ~io_fromMemoryStage_do_flush; // @[Memory.scala 150:45]
-  wire  ms_to_ws_valid = io_fromMemoryStage_valid & ready_go & ~io_fromMemoryStage_do_flush; // @[Memory.scala 150:42]
-  wire  _io_execute_inst_unable_T = ~io_fromMemoryStage_valid; // @[Memory.scala 77:29]
-  wire  _inst_is_mtc0_T = io_fromMemoryStage_aluop == 7'h12; // @[Memory.scala 141:41]
-  wire [1:0] addrLowBit2 = io_fromMemoryStage_mem_addr[1:0]; // @[Memory.scala 178:50]
+  wire  whilo = reset ? 1'h0 : io_fromMemoryStage_whilo; // @[Memory.scala 156:37 162:15 171:15]
+  wire  data_ok = io_fromMemoryStage_data_ok | io_fromMemoryStage_wait_mem & io_fromDataMemory_data_ok; // @[Memory.scala 92:54]
+  wire  ready_go = io_fromMemoryStage_wait_mem ? data_ok : 1'h1; // @[Memory.scala 147:21]
+  wire  _ms_to_ws_valid_T_1 = ~io_fromMemoryStage_do_flush; // @[Memory.scala 149:45]
+  wire  ms_to_ws_valid = io_fromMemoryStage_valid & ready_go & ~io_fromMemoryStage_do_flush; // @[Memory.scala 149:42]
+  wire  _io_execute_inst_unable_T = ~io_fromMemoryStage_valid; // @[Memory.scala 76:29]
+  wire [31:0] data = io_fromMemoryStage_data_ok ? io_fromMemoryStage_data : io_fromDataMemory_rdata; // @[Mux.scala 101:16]
+  wire  _inst_is_mtc0_T = io_fromMemoryStage_aluop == 7'h12; // @[Memory.scala 140:41]
+  wire [1:0] addrLowBit2 = io_fromMemoryStage_mem_addr[1:0]; // @[Memory.scala 177:50]
   wire [3:0] _reg_wen_T_1 = 2'h1 == addrLowBit2 ? 4'hc : 4'h8; // @[Mux.scala 81:58]
   wire [3:0] _reg_wen_T_3 = 2'h2 == addrLowBit2 ? 4'he : _reg_wen_T_1; // @[Mux.scala 81:58]
   wire [3:0] _reg_wen_T_5 = 2'h3 == addrLowBit2 ? 4'hf : _reg_wen_T_3; // @[Mux.scala 81:58]
@@ -4016,98 +4020,98 @@ module Memory(
   wire [3:0] _reg_wen_T_11 = 2'h3 == addrLowBit2 ? 4'h1 : _reg_wen_T_9; // @[Mux.scala 81:58]
   wire [3:0] _reg_wen_T_13 = 7'h36 == io_fromMemoryStage_aluop ? _reg_wen_T_5 : io_fromMemoryStage_reg_wen; // @[Mux.scala 81:58]
   wire [3:0] _reg_wen_T_15 = 7'h37 == io_fromMemoryStage_aluop ? _reg_wen_T_11 : _reg_wen_T_13; // @[Mux.scala 81:58]
-  wire [23:0] _reg_wdata_T_3 = io_fromDataMemory_rdata[7] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
-  wire [31:0] _reg_wdata_T_4 = {_reg_wdata_T_3,io_fromDataMemory_rdata[7:0]}; // @[Cat.scala 33:92]
-  wire [23:0] _reg_wdata_T_8 = io_fromDataMemory_rdata[15] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
-  wire [31:0] _reg_wdata_T_9 = {_reg_wdata_T_8,io_fromDataMemory_rdata[15:8]}; // @[Cat.scala 33:92]
-  wire [23:0] _reg_wdata_T_13 = io_fromDataMemory_rdata[23] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
-  wire [31:0] _reg_wdata_T_14 = {_reg_wdata_T_13,io_fromDataMemory_rdata[23:16]}; // @[Cat.scala 33:92]
-  wire [23:0] _reg_wdata_T_18 = io_fromDataMemory_rdata[31] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
-  wire [31:0] _reg_wdata_T_19 = {_reg_wdata_T_18,io_fromDataMemory_rdata[31:24]}; // @[Cat.scala 33:92]
+  wire [23:0] _reg_wdata_T_3 = data[7] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
+  wire [31:0] _reg_wdata_T_4 = {_reg_wdata_T_3,data[7:0]}; // @[Cat.scala 33:92]
+  wire [23:0] _reg_wdata_T_8 = data[15] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
+  wire [31:0] _reg_wdata_T_9 = {_reg_wdata_T_8,data[15:8]}; // @[Cat.scala 33:92]
+  wire [23:0] _reg_wdata_T_13 = data[23] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
+  wire [31:0] _reg_wdata_T_14 = {_reg_wdata_T_13,data[23:16]}; // @[Cat.scala 33:92]
+  wire [23:0] _reg_wdata_T_18 = data[31] ? 24'hffffff : 24'h0; // @[Bitwise.scala 77:12]
+  wire [31:0] _reg_wdata_T_19 = {_reg_wdata_T_18,data[31:24]}; // @[Cat.scala 33:92]
   wire [31:0] _reg_wdata_T_21 = 2'h1 == addrLowBit2 ? _reg_wdata_T_9 : _reg_wdata_T_4; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_23 = 2'h2 == addrLowBit2 ? _reg_wdata_T_14 : _reg_wdata_T_21; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_25 = 2'h3 == addrLowBit2 ? _reg_wdata_T_19 : _reg_wdata_T_23; // @[Mux.scala 81:58]
-  wire [31:0] _reg_wdata_T_28 = {24'h0,io_fromDataMemory_rdata[7:0]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_31 = {24'h0,io_fromDataMemory_rdata[15:8]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_34 = {24'h0,io_fromDataMemory_rdata[23:16]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_37 = {24'h0,io_fromDataMemory_rdata[31:24]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_28 = {24'h0,data[7:0]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_31 = {24'h0,data[15:8]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_34 = {24'h0,data[23:16]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_37 = {24'h0,data[31:24]}; // @[Cat.scala 33:92]
   wire [31:0] _reg_wdata_T_39 = 2'h1 == addrLowBit2 ? _reg_wdata_T_31 : _reg_wdata_T_28; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_41 = 2'h2 == addrLowBit2 ? _reg_wdata_T_34 : _reg_wdata_T_39; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_43 = 2'h3 == addrLowBit2 ? _reg_wdata_T_37 : _reg_wdata_T_41; // @[Mux.scala 81:58]
-  wire [15:0] _reg_wdata_T_47 = io_fromDataMemory_rdata[15] ? 16'hffff : 16'h0; // @[Bitwise.scala 77:12]
-  wire [31:0] _reg_wdata_T_48 = {_reg_wdata_T_47,io_fromDataMemory_rdata[15:0]}; // @[Cat.scala 33:92]
-  wire [15:0] _reg_wdata_T_52 = io_fromDataMemory_rdata[31] ? 16'hffff : 16'h0; // @[Bitwise.scala 77:12]
-  wire [31:0] _reg_wdata_T_53 = {_reg_wdata_T_52,io_fromDataMemory_rdata[31:16]}; // @[Cat.scala 33:92]
+  wire [15:0] _reg_wdata_T_47 = data[15] ? 16'hffff : 16'h0; // @[Bitwise.scala 77:12]
+  wire [31:0] _reg_wdata_T_48 = {_reg_wdata_T_47,data[15:0]}; // @[Cat.scala 33:92]
+  wire [15:0] _reg_wdata_T_52 = data[31] ? 16'hffff : 16'h0; // @[Bitwise.scala 77:12]
+  wire [31:0] _reg_wdata_T_53 = {_reg_wdata_T_52,data[31:16]}; // @[Cat.scala 33:92]
   wire [31:0] _reg_wdata_T_55 = 2'h0 == addrLowBit2 ? _reg_wdata_T_48 : 32'h0; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_57 = 2'h2 == addrLowBit2 ? _reg_wdata_T_53 : _reg_wdata_T_55; // @[Mux.scala 81:58]
-  wire [31:0] _reg_wdata_T_60 = {16'h0,io_fromDataMemory_rdata[15:0]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_63 = {16'h0,io_fromDataMemory_rdata[31:16]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_60 = {16'h0,data[15:0]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_63 = {16'h0,data[31:16]}; // @[Cat.scala 33:92]
   wire [31:0] _reg_wdata_T_65 = 2'h0 == addrLowBit2 ? _reg_wdata_T_60 : 32'h0; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_67 = 2'h2 == addrLowBit2 ? _reg_wdata_T_63 : _reg_wdata_T_65; // @[Mux.scala 81:58]
-  wire [31:0] _reg_wdata_T_70 = {io_fromDataMemory_rdata[7:0],io_fromMemoryStage_reg2[23:0]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_73 = {io_fromDataMemory_rdata[15:0],io_fromMemoryStage_reg2[15:0]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_76 = {io_fromDataMemory_rdata[23:0],io_fromMemoryStage_reg2[7:0]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_70 = {data[7:0],io_fromMemoryStage_reg2[23:0]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_73 = {data[15:0],io_fromMemoryStage_reg2[15:0]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_76 = {data[23:0],io_fromMemoryStage_reg2[7:0]}; // @[Cat.scala 33:92]
   wire [31:0] _reg_wdata_T_78 = 2'h1 == addrLowBit2 ? _reg_wdata_T_73 : _reg_wdata_T_70; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_80 = 2'h2 == addrLowBit2 ? _reg_wdata_T_76 : _reg_wdata_T_78; // @[Mux.scala 81:58]
-  wire [31:0] _reg_wdata_T_82 = 2'h3 == addrLowBit2 ? io_fromDataMemory_rdata : _reg_wdata_T_80; // @[Mux.scala 81:58]
-  wire [31:0] _reg_wdata_T_85 = {io_fromMemoryStage_reg2[31:24],io_fromDataMemory_rdata[31:8]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_88 = {io_fromMemoryStage_reg2[31:16],io_fromDataMemory_rdata[31:16]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_91 = {io_fromMemoryStage_reg2[31:8],io_fromDataMemory_rdata[31:24]}; // @[Cat.scala 33:92]
-  wire [31:0] _reg_wdata_T_93 = 2'h1 == addrLowBit2 ? _reg_wdata_T_85 : io_fromDataMemory_rdata; // @[Mux.scala 81:58]
+  wire [31:0] _reg_wdata_T_82 = 2'h3 == addrLowBit2 ? data : _reg_wdata_T_80; // @[Mux.scala 81:58]
+  wire [31:0] _reg_wdata_T_85 = {io_fromMemoryStage_reg2[31:24],data[31:8]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_88 = {io_fromMemoryStage_reg2[31:16],data[31:16]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_91 = {io_fromMemoryStage_reg2[31:8],data[31:24]}; // @[Cat.scala 33:92]
+  wire [31:0] _reg_wdata_T_93 = 2'h1 == addrLowBit2 ? _reg_wdata_T_85 : data; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_95 = 2'h2 == addrLowBit2 ? _reg_wdata_T_88 : _reg_wdata_T_93; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_97 = 2'h3 == addrLowBit2 ? _reg_wdata_T_91 : _reg_wdata_T_95; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_99 = 7'h30 == io_fromMemoryStage_aluop ? _reg_wdata_T_25 : io_fromMemoryStage_reg_wdata; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_101 = 7'h31 == io_fromMemoryStage_aluop ? _reg_wdata_T_43 : _reg_wdata_T_99; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_103 = 7'h32 == io_fromMemoryStage_aluop ? _reg_wdata_T_57 : _reg_wdata_T_101; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_105 = 7'h33 == io_fromMemoryStage_aluop ? _reg_wdata_T_67 : _reg_wdata_T_103; // @[Mux.scala 81:58]
-  wire [31:0] _reg_wdata_T_107 = 7'h35 == io_fromMemoryStage_aluop ? io_fromDataMemory_rdata : _reg_wdata_T_105; // @[Mux.scala 81:58]
+  wire [31:0] _reg_wdata_T_107 = 7'h35 == io_fromMemoryStage_aluop ? data : _reg_wdata_T_105; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_109 = 7'h36 == io_fromMemoryStage_aluop ? _reg_wdata_T_82 : _reg_wdata_T_107; // @[Mux.scala 81:58]
   wire [31:0] _reg_wdata_T_111 = 7'h37 == io_fromMemoryStage_aluop ? _reg_wdata_T_97 : _reg_wdata_T_109; // @[Mux.scala 81:58]
-  wire [31:0] _reg_wdata_T_113 = 7'h34 == io_fromMemoryStage_aluop ? io_fromDataMemory_rdata : _reg_wdata_T_111; // @[Mux.scala 81:58]
-  wire [31:0] reg_wdata = reset ? 32'h0 : _reg_wdata_T_113; // @[Memory.scala 157:37 160:15 207:15]
-  wire [7:0] cp0_waddr = reset ? 8'h0 : io_fromMemoryStage_cp0_addr; // @[Memory.scala 157:37 165:15 174:15]
-  wire [31:0] cp0_wdata = reset ? 32'h0 : reg_wdata; // @[Memory.scala 157:37 166:15 176:15]
-  assign io_decoder_reg_waddr = reset ? 5'h0 : io_fromMemoryStage_reg_waddr; // @[Memory.scala 157:37 158:15 169:15]
-  assign io_decoder_reg_wdata = reset ? 32'h0 : _reg_wdata_T_113; // @[Memory.scala 157:37 160:15 207:15]
-  assign io_decoder_reg_wen = reset ? 4'h0 : _reg_wen_T_15; // @[Memory.scala 157:37 159:15 180:13]
-  assign io_decoder_inst_is_mfc0 = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h11; // @[Memory.scala 140:31]
-  assign io_decoder_ms_fwd_valid = io_fromMemoryStage_valid & ready_go & ~io_fromMemoryStage_do_flush; // @[Memory.scala 150:42]
+  wire [31:0] _reg_wdata_T_113 = 7'h34 == io_fromMemoryStage_aluop ? data : _reg_wdata_T_111; // @[Mux.scala 81:58]
+  wire [31:0] reg_wdata = reset ? 32'h0 : _reg_wdata_T_113; // @[Memory.scala 156:37 159:15 206:15]
+  wire [7:0] cp0_waddr = reset ? 8'h0 : io_fromMemoryStage_cp0_addr; // @[Memory.scala 156:37 164:15 173:15]
+  wire [31:0] cp0_wdata = reset ? 32'h0 : reg_wdata; // @[Memory.scala 156:37 165:15 175:15]
+  assign io_decoder_reg_waddr = reset ? 5'h0 : io_fromMemoryStage_reg_waddr; // @[Memory.scala 156:37 157:15 168:15]
+  assign io_decoder_reg_wdata = reset ? 32'h0 : _reg_wdata_T_113; // @[Memory.scala 156:37 159:15 206:15]
+  assign io_decoder_reg_wen = reset ? 4'h0 : _reg_wen_T_15; // @[Memory.scala 156:37 158:15 179:13]
+  assign io_decoder_inst_is_mfc0 = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h11; // @[Memory.scala 139:31]
+  assign io_decoder_ms_fwd_valid = io_fromMemoryStage_valid & ready_go & ~io_fromMemoryStage_do_flush; // @[Memory.scala 149:42]
   assign io_decoder_blk_valid = io_fromMemoryStage_valid & io_fromMemoryStage_res_from_mem & ~ready_go &
-    _ms_to_ws_valid_T_1; // @[Memory.scala 153:76]
-  assign io_mov_cp0_wen = reset ? 1'h0 : _inst_is_mtc0_T & io_fromMemoryStage_valid; // @[Memory.scala 157:37 164:15 175:15]
-  assign io_mov_cp0_waddr = cp0_waddr[0]; // @[Memory.scala 133:20]
-  assign io_mov_cp0_wdata = cp0_wdata[0]; // @[Memory.scala 134:20]
-  assign io_memoryStage_allowin = _io_execute_inst_unable_T | ready_go; // @[Memory.scala 149:31]
-  assign io_dataMemory_waiting = io_fromMemoryStage_valid & io_fromMemoryStage_wait_mem & ~data_ok; // @[Memory.scala 101:68]
-  assign io_execute_whilo = whilo & ms_to_ws_valid; // @[Memory.scala 75:35]
-  assign io_execute_hi = reset ? 32'h0 : io_fromMemoryStage_hi; // @[Memory.scala 157:37 161:15 170:15]
-  assign io_execute_lo = reset ? 32'h0 : io_fromMemoryStage_lo; // @[Memory.scala 157:37 162:15 171:15]
-  assign io_execute_allowin = _io_execute_inst_unable_T | ready_go; // @[Memory.scala 149:31]
-  assign io_execute_inst_unable = ~io_fromMemoryStage_valid | io_fromMemoryStage_data_ok; // @[Memory.scala 77:61]
-  assign io_writeBackStage_pc = io_fromMemoryStage_pc; // @[Memory.scala 109:37]
-  assign io_writeBackStage_reg_wdata = reset ? 32'h0 : _reg_wdata_T_113; // @[Memory.scala 157:37 160:15 207:15]
-  assign io_writeBackStage_reg_waddr = reset ? 5'h0 : io_fromMemoryStage_reg_waddr; // @[Memory.scala 157:37 158:15 169:15]
-  assign io_writeBackStage_reg_wen = reset ? 4'h0 : _reg_wen_T_15; // @[Memory.scala 157:37 159:15 180:13]
-  assign io_writeBackStage_whilo = reset ? 1'h0 : io_fromMemoryStage_whilo; // @[Memory.scala 157:37 163:15 172:15]
-  assign io_writeBackStage_hi = reset ? 32'h0 : io_fromMemoryStage_hi; // @[Memory.scala 157:37 161:15 170:15]
-  assign io_writeBackStage_lo = reset ? 32'h0 : io_fromMemoryStage_lo; // @[Memory.scala 157:37 162:15 171:15]
-  assign io_writeBackStage_valid = io_fromMemoryStage_valid & ready_go & ~io_fromMemoryStage_do_flush; // @[Memory.scala 150:42]
-  assign io_writeBackStage_inst_is_mfc0 = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h11; // @[Memory.scala 140:31]
-  assign io_writeBackStage_inst_is_mtc0 = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h12; // @[Memory.scala 141:31]
-  assign io_writeBackStage_inst_is_eret = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h46; // @[Memory.scala 142:31]
-  assign io_writeBackStage_bd = io_fromMemoryStage_bd; // @[Memory.scala 123:37]
-  assign io_writeBackStage_badvaddr = io_fromMemoryStage_badvaddr; // @[Memory.scala 121:37]
-  assign io_writeBackStage_cp0_addr = io_fromMemoryStage_cp0_addr; // @[Memory.scala 119:37]
-  assign io_writeBackStage_excode = io_fromMemoryStage_excode; // @[Memory.scala 120:37]
-  assign io_writeBackStage_ex = io_fromMemoryStage_valid & io_fromMemoryStage_ex; // @[Memory.scala 272:18]
-  assign io_writeBackStage_inst_is_tlbp = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h48; // @[Memory.scala 144:31]
-  assign io_writeBackStage_inst_is_tlbr = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h49; // @[Memory.scala 145:31]
-  assign io_writeBackStage_inst_is_tlbwi = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h4a; // @[Memory.scala 146:31]
-  assign io_writeBackStage_tlb_refill = io_fromMemoryStage_tlb_refill; // @[Memory.scala 127:37]
-  assign io_writeBackStage_after_tlb = io_fromMemoryStage_after_tlb; // @[Memory.scala 128:37]
-  assign io_writeBackStage_s1_found = io_fromMemoryStage_s1_found; // @[Memory.scala 129:37]
-  assign io_writeBackStage_s1_index = io_fromMemoryStage_s1_index; // @[Memory.scala 130:37]
-  assign io_ctrl_ex = io_fromMemoryStage_valid & io_fromMemoryStage_ex; // @[Memory.scala 272:18]
+    _ms_to_ws_valid_T_1; // @[Memory.scala 152:76]
+  assign io_mov_cp0_wen = reset ? 1'h0 : _inst_is_mtc0_T & io_fromMemoryStage_valid; // @[Memory.scala 156:37 163:15 174:15]
+  assign io_mov_cp0_waddr = cp0_waddr[0]; // @[Memory.scala 132:20]
+  assign io_mov_cp0_wdata = cp0_wdata[0]; // @[Memory.scala 133:20]
+  assign io_memoryStage_allowin = _io_execute_inst_unable_T | ready_go; // @[Memory.scala 148:31]
+  assign io_dataMemory_waiting = io_fromMemoryStage_valid & io_fromMemoryStage_wait_mem & ~data_ok; // @[Memory.scala 100:68]
+  assign io_execute_whilo = whilo & ms_to_ws_valid; // @[Memory.scala 74:35]
+  assign io_execute_hi = reset ? 32'h0 : io_fromMemoryStage_hi; // @[Memory.scala 156:37 160:15 169:15]
+  assign io_execute_lo = reset ? 32'h0 : io_fromMemoryStage_lo; // @[Memory.scala 156:37 161:15 170:15]
+  assign io_execute_allowin = _io_execute_inst_unable_T | ready_go; // @[Memory.scala 148:31]
+  assign io_execute_inst_unable = ~io_fromMemoryStage_valid | io_fromMemoryStage_data_ok; // @[Memory.scala 76:61]
+  assign io_writeBackStage_pc = io_fromMemoryStage_pc; // @[Memory.scala 108:37]
+  assign io_writeBackStage_reg_wdata = reset ? 32'h0 : _reg_wdata_T_113; // @[Memory.scala 156:37 159:15 206:15]
+  assign io_writeBackStage_reg_waddr = reset ? 5'h0 : io_fromMemoryStage_reg_waddr; // @[Memory.scala 156:37 157:15 168:15]
+  assign io_writeBackStage_reg_wen = reset ? 4'h0 : _reg_wen_T_15; // @[Memory.scala 156:37 158:15 179:13]
+  assign io_writeBackStage_whilo = reset ? 1'h0 : io_fromMemoryStage_whilo; // @[Memory.scala 156:37 162:15 171:15]
+  assign io_writeBackStage_hi = reset ? 32'h0 : io_fromMemoryStage_hi; // @[Memory.scala 156:37 160:15 169:15]
+  assign io_writeBackStage_lo = reset ? 32'h0 : io_fromMemoryStage_lo; // @[Memory.scala 156:37 161:15 170:15]
+  assign io_writeBackStage_valid = io_fromMemoryStage_valid & ready_go & ~io_fromMemoryStage_do_flush; // @[Memory.scala 149:42]
+  assign io_writeBackStage_inst_is_mfc0 = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h11; // @[Memory.scala 139:31]
+  assign io_writeBackStage_inst_is_mtc0 = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h12; // @[Memory.scala 140:31]
+  assign io_writeBackStage_inst_is_eret = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h46; // @[Memory.scala 141:31]
+  assign io_writeBackStage_bd = io_fromMemoryStage_bd; // @[Memory.scala 122:37]
+  assign io_writeBackStage_badvaddr = io_fromMemoryStage_badvaddr; // @[Memory.scala 120:37]
+  assign io_writeBackStage_cp0_addr = io_fromMemoryStage_cp0_addr; // @[Memory.scala 118:37]
+  assign io_writeBackStage_excode = io_fromMemoryStage_excode; // @[Memory.scala 119:37]
+  assign io_writeBackStage_ex = io_fromMemoryStage_valid & io_fromMemoryStage_ex; // @[Memory.scala 271:18]
+  assign io_writeBackStage_inst_is_tlbp = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h48; // @[Memory.scala 143:31]
+  assign io_writeBackStage_inst_is_tlbr = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h49; // @[Memory.scala 144:31]
+  assign io_writeBackStage_inst_is_tlbwi = io_fromMemoryStage_valid & io_fromMemoryStage_aluop == 7'h4a; // @[Memory.scala 145:31]
+  assign io_writeBackStage_tlb_refill = io_fromMemoryStage_tlb_refill; // @[Memory.scala 126:37]
+  assign io_writeBackStage_after_tlb = io_fromMemoryStage_after_tlb; // @[Memory.scala 127:37]
+  assign io_writeBackStage_s1_found = io_fromMemoryStage_s1_found; // @[Memory.scala 128:37]
+  assign io_writeBackStage_s1_index = io_fromMemoryStage_s1_index; // @[Memory.scala 129:37]
+  assign io_ctrl_ex = io_fromMemoryStage_valid & io_fromMemoryStage_ex; // @[Memory.scala 271:18]
 endmodule
 module WriteBackStage(
   input         clock,
@@ -5676,17 +5680,17 @@ module Ctrl(
   output        io_dataMemory_do_flush
 );
   assign io_preFetchStage_after_ex = io_fromFetchStage_ex | io_fromDecoder_ex | io_fromExecute_ex | io_fromMemory_ex |
-    io_fromWriteBackStage_ex; // @[Ctrl.scala 43:65]
+    io_fromWriteBackStage_ex; // @[Ctrl.scala 50:65]
   assign io_preFetchStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 44:29]
-  assign io_preFetchStage_flush_pc = io_fromWriteBackStage_flush_pc; // @[Ctrl.scala 45:29]
-  assign io_preFetchStage_block = |io_fromInstMemory_inst_sram_discard | |io_fromDataMemory_data_sram_discard; // @[Ctrl.scala 42:54]
-  assign io_fetchStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 48:26]
-  assign io_decoderStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 50:28]
-  assign io_executeStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 53:28]
-  assign io_executeStage_after_ex = io_fromMemory_ex | io_fromWriteBackStage_ex; // @[Ctrl.scala 54:37]
-  assign io_memoryStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 56:27]
-  assign io_instMemory_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 40:26]
-  assign io_dataMemory_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 39:26]
+  assign io_preFetchStage_flush_pc = io_fromWriteBackStage_flush_pc; // @[Ctrl.scala 40:29]
+  assign io_preFetchStage_block = |io_fromInstMemory_inst_sram_discard | |io_fromDataMemory_data_sram_discard; // @[Ctrl.scala 39:54]
+  assign io_fetchStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 45:29]
+  assign io_decoderStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 46:29]
+  assign io_executeStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 47:29]
+  assign io_executeStage_after_ex = io_fromMemory_ex | io_fromWriteBackStage_ex; // @[Ctrl.scala 53:38]
+  assign io_memoryStage_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 48:29]
+  assign io_instMemory_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 43:29]
+  assign io_dataMemory_do_flush = io_fromWriteBackStage_do_flush; // @[Ctrl.scala 42:29]
 endmodule
 module TLB(
   input         clock,
@@ -8059,6 +8063,7 @@ module PuaMips(
   wire [31:0] execute_io_fromDiv_remainder; // @[PuaMips.scala 30:30]
   wire [31:0] execute_io_fromMov_out; // @[PuaMips.scala 30:30]
   wire  execute_io_fromDataMemory_addr_ok; // @[PuaMips.scala 30:30]
+  wire [31:0] execute_io_fromDataMemory_rdata; // @[PuaMips.scala 30:30]
   wire  execute_io_fromDataMemory_data_ok; // @[PuaMips.scala 30:30]
   wire  execute_io_fromExecuteStage_do_flush; // @[PuaMips.scala 30:30]
   wire  execute_io_fromExecuteStage_after_ex; // @[PuaMips.scala 30:30]
@@ -8137,14 +8142,13 @@ module PuaMips(
   wire [4:0] execute_io_memoryStage_excode; // @[PuaMips.scala 30:30]
   wire  execute_io_memoryStage_ex; // @[PuaMips.scala 30:30]
   wire  execute_io_memoryStage_data_ok; // @[PuaMips.scala 30:30]
+  wire [31:0] execute_io_memoryStage_data; // @[PuaMips.scala 30:30]
   wire  execute_io_memoryStage_wait_mem; // @[PuaMips.scala 30:30]
   wire  execute_io_memoryStage_res_from_mem; // @[PuaMips.scala 30:30]
   wire  execute_io_memoryStage_tlb_refill; // @[PuaMips.scala 30:30]
   wire  execute_io_memoryStage_after_tlb; // @[PuaMips.scala 30:30]
   wire  execute_io_memoryStage_s1_found; // @[PuaMips.scala 30:30]
   wire [3:0] execute_io_memoryStage_s1_index; // @[PuaMips.scala 30:30]
-  wire [6:0] execute_io_dataMemory_aluop; // @[PuaMips.scala 30:30]
-  wire [1:0] execute_io_dataMemory_addrLowBit2; // @[PuaMips.scala 30:30]
   wire  execute_io_dataMemory_req; // @[PuaMips.scala 30:30]
   wire  execute_io_dataMemory_wr; // @[PuaMips.scala 30:30]
   wire [1:0] execute_io_dataMemory_size; // @[PuaMips.scala 30:30]
@@ -8200,8 +8204,6 @@ module PuaMips(
   wire [1:0] instMemory_io_ctrl_inst_sram_discard; // @[PuaMips.scala 35:30]
   wire  dataMemory_clock; // @[PuaMips.scala 36:30]
   wire  dataMemory_reset; // @[PuaMips.scala 36:30]
-  wire [6:0] dataMemory_io_fromExecute_aluop; // @[PuaMips.scala 36:30]
-  wire [1:0] dataMemory_io_fromExecute_addrLowBit2; // @[PuaMips.scala 36:30]
   wire  dataMemory_io_fromExecute_req; // @[PuaMips.scala 36:30]
   wire  dataMemory_io_fromExecute_wr; // @[PuaMips.scala 36:30]
   wire [1:0] dataMemory_io_fromExecute_size; // @[PuaMips.scala 36:30]
@@ -8212,6 +8214,7 @@ module PuaMips(
   wire  dataMemory_io_fromCtrl_do_flush; // @[PuaMips.scala 36:30]
   wire [31:0] dataMemory_io_fromDataMMU_paddr; // @[PuaMips.scala 36:30]
   wire  dataMemory_io_execute_addr_ok; // @[PuaMips.scala 36:30]
+  wire [31:0] dataMemory_io_execute_rdata; // @[PuaMips.scala 36:30]
   wire  dataMemory_io_execute_data_ok; // @[PuaMips.scala 36:30]
   wire  dataMemory_io_memory_data_ok; // @[PuaMips.scala 36:30]
   wire [31:0] dataMemory_io_memory_rdata; // @[PuaMips.scala 36:30]
@@ -8279,6 +8282,7 @@ module PuaMips(
   wire [4:0] memoryStage_io_fromExecute_excode; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_fromExecute_ex; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_fromExecute_data_ok; // @[PuaMips.scala 38:30]
+  wire [31:0] memoryStage_io_fromExecute_data; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_fromExecute_wait_mem; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_fromExecute_res_from_mem; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_fromExecute_tlb_refill; // @[PuaMips.scala 38:30]
@@ -8305,6 +8309,7 @@ module PuaMips(
   wire [4:0] memoryStage_io_memory_excode; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_memory_ex; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_memory_data_ok; // @[PuaMips.scala 38:30]
+  wire [31:0] memoryStage_io_memory_data; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_memory_wait_mem; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_memory_res_from_mem; // @[PuaMips.scala 38:30]
   wire  memoryStage_io_memory_tlb_refill; // @[PuaMips.scala 38:30]
@@ -8330,6 +8335,7 @@ module PuaMips(
   wire [4:0] memory_io_fromMemoryStage_excode; // @[PuaMips.scala 39:30]
   wire  memory_io_fromMemoryStage_ex; // @[PuaMips.scala 39:30]
   wire  memory_io_fromMemoryStage_data_ok; // @[PuaMips.scala 39:30]
+  wire [31:0] memory_io_fromMemoryStage_data; // @[PuaMips.scala 39:30]
   wire  memory_io_fromMemoryStage_wait_mem; // @[PuaMips.scala 39:30]
   wire  memory_io_fromMemoryStage_res_from_mem; // @[PuaMips.scala 39:30]
   wire  memory_io_fromMemoryStage_tlb_refill; // @[PuaMips.scala 39:30]
@@ -8825,6 +8831,7 @@ module PuaMips(
     .io_fromDiv_remainder(execute_io_fromDiv_remainder),
     .io_fromMov_out(execute_io_fromMov_out),
     .io_fromDataMemory_addr_ok(execute_io_fromDataMemory_addr_ok),
+    .io_fromDataMemory_rdata(execute_io_fromDataMemory_rdata),
     .io_fromDataMemory_data_ok(execute_io_fromDataMemory_data_ok),
     .io_fromExecuteStage_do_flush(execute_io_fromExecuteStage_do_flush),
     .io_fromExecuteStage_after_ex(execute_io_fromExecuteStage_after_ex),
@@ -8903,14 +8910,13 @@ module PuaMips(
     .io_memoryStage_excode(execute_io_memoryStage_excode),
     .io_memoryStage_ex(execute_io_memoryStage_ex),
     .io_memoryStage_data_ok(execute_io_memoryStage_data_ok),
+    .io_memoryStage_data(execute_io_memoryStage_data),
     .io_memoryStage_wait_mem(execute_io_memoryStage_wait_mem),
     .io_memoryStage_res_from_mem(execute_io_memoryStage_res_from_mem),
     .io_memoryStage_tlb_refill(execute_io_memoryStage_tlb_refill),
     .io_memoryStage_after_tlb(execute_io_memoryStage_after_tlb),
     .io_memoryStage_s1_found(execute_io_memoryStage_s1_found),
     .io_memoryStage_s1_index(execute_io_memoryStage_s1_index),
-    .io_dataMemory_aluop(execute_io_dataMemory_aluop),
-    .io_dataMemory_addrLowBit2(execute_io_dataMemory_addrLowBit2),
     .io_dataMemory_req(execute_io_dataMemory_req),
     .io_dataMemory_wr(execute_io_dataMemory_wr),
     .io_dataMemory_size(execute_io_dataMemory_size),
@@ -8978,8 +8984,6 @@ module PuaMips(
   DataMemory dataMemory ( // @[PuaMips.scala 36:30]
     .clock(dataMemory_clock),
     .reset(dataMemory_reset),
-    .io_fromExecute_aluop(dataMemory_io_fromExecute_aluop),
-    .io_fromExecute_addrLowBit2(dataMemory_io_fromExecute_addrLowBit2),
     .io_fromExecute_req(dataMemory_io_fromExecute_req),
     .io_fromExecute_wr(dataMemory_io_fromExecute_wr),
     .io_fromExecute_size(dataMemory_io_fromExecute_size),
@@ -8990,6 +8994,7 @@ module PuaMips(
     .io_fromCtrl_do_flush(dataMemory_io_fromCtrl_do_flush),
     .io_fromDataMMU_paddr(dataMemory_io_fromDataMMU_paddr),
     .io_execute_addr_ok(dataMemory_io_execute_addr_ok),
+    .io_execute_rdata(dataMemory_io_execute_rdata),
     .io_execute_data_ok(dataMemory_io_execute_data_ok),
     .io_memory_data_ok(dataMemory_io_memory_data_ok),
     .io_memory_rdata(dataMemory_io_memory_rdata),
@@ -9061,6 +9066,7 @@ module PuaMips(
     .io_fromExecute_excode(memoryStage_io_fromExecute_excode),
     .io_fromExecute_ex(memoryStage_io_fromExecute_ex),
     .io_fromExecute_data_ok(memoryStage_io_fromExecute_data_ok),
+    .io_fromExecute_data(memoryStage_io_fromExecute_data),
     .io_fromExecute_wait_mem(memoryStage_io_fromExecute_wait_mem),
     .io_fromExecute_res_from_mem(memoryStage_io_fromExecute_res_from_mem),
     .io_fromExecute_tlb_refill(memoryStage_io_fromExecute_tlb_refill),
@@ -9087,6 +9093,7 @@ module PuaMips(
     .io_memory_excode(memoryStage_io_memory_excode),
     .io_memory_ex(memoryStage_io_memory_ex),
     .io_memory_data_ok(memoryStage_io_memory_data_ok),
+    .io_memory_data(memoryStage_io_memory_data),
     .io_memory_wait_mem(memoryStage_io_memory_wait_mem),
     .io_memory_res_from_mem(memoryStage_io_memory_res_from_mem),
     .io_memory_tlb_refill(memoryStage_io_memory_tlb_refill),
@@ -9114,6 +9121,7 @@ module PuaMips(
     .io_fromMemoryStage_excode(memory_io_fromMemoryStage_excode),
     .io_fromMemoryStage_ex(memory_io_fromMemoryStage_ex),
     .io_fromMemoryStage_data_ok(memory_io_fromMemoryStage_data_ok),
+    .io_fromMemoryStage_data(memory_io_fromMemoryStage_data),
     .io_fromMemoryStage_wait_mem(memory_io_fromMemoryStage_wait_mem),
     .io_fromMemoryStage_res_from_mem(memory_io_fromMemoryStage_res_from_mem),
     .io_fromMemoryStage_tlb_refill(memory_io_fromMemoryStage_tlb_refill),
@@ -9562,6 +9570,7 @@ module PuaMips(
   assign execute_io_fromDiv_remainder = div_io_execute_remainder; // @[PuaMips.scala 99:18]
   assign execute_io_fromMov_out = mov_io_execute_out; // @[PuaMips.scala 100:18]
   assign execute_io_fromDataMemory_addr_ok = dataMemory_io_execute_addr_ok; // @[PuaMips.scala 115:25]
+  assign execute_io_fromDataMemory_rdata = dataMemory_io_execute_rdata; // @[PuaMips.scala 115:25]
   assign execute_io_fromDataMemory_data_ok = dataMemory_io_execute_data_ok; // @[PuaMips.scala 115:25]
   assign execute_io_fromExecuteStage_do_flush = executeStage_io_execute_do_flush; // @[PuaMips.scala 90:27]
   assign execute_io_fromExecuteStage_after_ex = executeStage_io_execute_after_ex; // @[PuaMips.scala 90:27]
@@ -9633,8 +9642,6 @@ module PuaMips(
   assign instMemory_io_sramAXITrans_rdata = sramAXITrans_io_instMemory_rdata; // @[PuaMips.scala 52:30]
   assign dataMemory_clock = clock;
   assign dataMemory_reset = reset;
-  assign dataMemory_io_fromExecute_aluop = execute_io_dataMemory_aluop; // @[PuaMips.scala 104:25]
-  assign dataMemory_io_fromExecute_addrLowBit2 = execute_io_dataMemory_addrLowBit2; // @[PuaMips.scala 104:25]
   assign dataMemory_io_fromExecute_req = execute_io_dataMemory_req; // @[PuaMips.scala 104:25]
   assign dataMemory_io_fromExecute_wr = execute_io_dataMemory_wr; // @[PuaMips.scala 104:25]
   assign dataMemory_io_fromExecute_size = execute_io_dataMemory_size; // @[PuaMips.scala 104:25]
@@ -9683,6 +9690,7 @@ module PuaMips(
   assign memoryStage_io_fromExecute_excode = execute_io_memoryStage_excode; // @[PuaMips.scala 103:26]
   assign memoryStage_io_fromExecute_ex = execute_io_memoryStage_ex; // @[PuaMips.scala 103:26]
   assign memoryStage_io_fromExecute_data_ok = execute_io_memoryStage_data_ok; // @[PuaMips.scala 103:26]
+  assign memoryStage_io_fromExecute_data = execute_io_memoryStage_data; // @[PuaMips.scala 103:26]
   assign memoryStage_io_fromExecute_wait_mem = execute_io_memoryStage_wait_mem; // @[PuaMips.scala 103:26]
   assign memoryStage_io_fromExecute_res_from_mem = execute_io_memoryStage_res_from_mem; // @[PuaMips.scala 103:26]
   assign memoryStage_io_fromExecute_tlb_refill = execute_io_memoryStage_tlb_refill; // @[PuaMips.scala 103:26]
@@ -9710,6 +9718,7 @@ module PuaMips(
   assign memory_io_fromMemoryStage_excode = memoryStage_io_memory_excode; // @[PuaMips.scala 111:25]
   assign memory_io_fromMemoryStage_ex = memoryStage_io_memory_ex; // @[PuaMips.scala 111:25]
   assign memory_io_fromMemoryStage_data_ok = memoryStage_io_memory_data_ok; // @[PuaMips.scala 111:25]
+  assign memory_io_fromMemoryStage_data = memoryStage_io_memory_data; // @[PuaMips.scala 111:25]
   assign memory_io_fromMemoryStage_wait_mem = memoryStage_io_memory_wait_mem; // @[PuaMips.scala 111:25]
   assign memory_io_fromMemoryStage_res_from_mem = memoryStage_io_memory_res_from_mem; // @[PuaMips.scala 111:25]
   assign memory_io_fromMemoryStage_tlb_refill = memoryStage_io_memory_tlb_refill; // @[PuaMips.scala 111:25]

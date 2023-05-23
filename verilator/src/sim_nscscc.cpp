@@ -149,6 +149,20 @@ void func_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref) {
     top->final();
 }
 
+int ref_scores[10] = {
+    0x13CF7FA,
+    0x7BDD47E,
+    0x10CE6772,
+    0xAA1AA5C,
+    0x1FC00D8,
+    0x719615A,
+    0x6E0009A,
+    0x74B8B20,
+    0x853B00,
+    0x50A1BCC,
+};
+int dut_scores[10] = {};
+
 void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1, int test_end = 10) {
     axi4     <32,32,4> mmio_sigs;
     axi4_ref <32,32,4> mmio_sigs_ref(mmio_sigs);
@@ -210,9 +224,18 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
             ticks ++;
         }
         if (trace_on) vcd.close();
-        printf("%x\n",confreg.get_num());
+        int num = confreg.get_num();
+        printf("%x\n", num);
+        dut_scores[test-1] = num;
     }
     top->final();
+    double mulscores = 1;
+    printf("==================scores===================\n");
+    for (int test = test_start; test <= test_end; test++) {
+        printf("%.3f\n", ref_scores[test-1] * 1.0 / dut_scores[test-1]);
+        mulscores *= ref_scores[test-1] * 1.0 / dut_scores[test-1];
+    }
+    if (test_end) printf("scores = %.3f\n", std::pow(mulscores, 0.1));
     printf("total ticks = %lu\n", ticks);
 }
 
@@ -266,6 +289,7 @@ void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_star
         uint64_t rst_ticks = 1000;
         uint64_t last_commit = ticks;
         uint64_t commit_timeout = 5000;
+        uint64_t count = 0;
         cemu_mips.reset();
         while (!Verilated::gotFinish() && sim_time > 0 && running && !test_end) {
             if (rst_ticks  > 0) {
@@ -365,7 +389,7 @@ int main(int argc, char** argv, char** env) {
         }
         else if (strcmp(argv[i],"-prog") == 0) {
             if (i+1 < argc) {
-                sscanf(argv[++i],"%lu",&perf_start);
+                sscanf(argv[++i],"%u",&perf_start);
                 perf_end = perf_start;
                 printf("set performance test program to %d\n",perf_start);
             }
