@@ -183,7 +183,10 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
     }
     // init and run
     uint64_t ticks = 0;
+    uint64_t count = 1;
+    uint32_t last_pc = 0;
 
+    printf("==================ticks===================\n");
     for (int test=test_start;test<=test_end && running;test++) {
         bool test_end = false;
         confreg.set_switch(test);
@@ -203,6 +206,7 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
             else top->aresetn = 1;
             top->aclk = !top->aclk;
             if (top->aclk && top->aresetn) mmio_sigs.update_input(mmio_ref);
+            if (top->aclk && top->aresetn && top->debug_wb_pc != last_pc && top->debug_wb_pc) count ++, last_pc = top->debug_wb_pc;
             top->eval();
             if (top->aclk && top->aresetn) {
                 confreg.tick();
@@ -236,7 +240,10 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
         mulscores *= ref_scores[test-1] * 1.0 / dut_scores[test-1];
     }
     if (test_end) printf("scores = %.3f\n", std::pow(mulscores, 0.1));
+    printf("=================IPC=====================\n");
+    printf("total insts = %lu\n", count);
     printf("total ticks = %lu\n", ticks);
+    printf("IPC = %.3f\n", count * 1.0 / ticks);
 }
 
 void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1, int test_end = 10) {
@@ -289,7 +296,6 @@ void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_star
         uint64_t rst_ticks = 1000;
         uint64_t last_commit = ticks;
         uint64_t commit_timeout = 5000;
-        uint64_t count = 0;
         cemu_mips.reset();
         while (!Verilated::gotFinish() && sim_time > 0 && running && !test_end) {
             if (rst_ticks  > 0) {
