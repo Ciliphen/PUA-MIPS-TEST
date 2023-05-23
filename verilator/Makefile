@@ -4,14 +4,15 @@ INC_FILE := $(shell find $(SRC_DIR) -name '*.svh') $(shell find $(SRC_DIR) -name
 INC_DIR	 := $(addprefix -I, $(shell find $(SRC_DIR) -type d))
 .PHONY: func perf clean
 
-func: obj_dir/V$(TOP_NAME)
-	./obj_dir/Vmycpu_top -func
-
 obj_dir/V$(TOP_NAME): src/* $(INC_FILE)
 	verilator --cc -Wno-fatal --exe --trace --trace-structs --build src/sim_nscscc.cpp $(INC_FILE) $(INC_DIR) --top $(TOP_NAME) -j `nproc`
 
+func: obj_dir/V$(TOP_NAME)
+	./obj_dir/Vmycpu_top -func
+
 perf: obj_dir/V$(TOP_NAME)
-	./obj_dir/Vmycpu_top -perf 
+	./obj_dir/Vmycpu_top -perf > output.txt
+	cat output.txt
 
 perfdiff: obj_dir/V$(TOP_NAME)
 	./obj_dir/Vmycpu_top -perfdiff

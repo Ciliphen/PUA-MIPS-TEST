@@ -2,3 +2,4 @@ obj_dir
 .vscode
 *.vcd
 *.gtkw
+output.txt
