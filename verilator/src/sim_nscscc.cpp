@@ -17,6 +17,7 @@
 #include <thread>
 #include <csignal>
 #include <sstream>
+#include <fstream>
 
 void connect_wire(axi4_ptr <32,32,4> &mmio_ptr, Vmycpu_top *top) {
     // connect
@@ -64,6 +65,8 @@ long sim_time = 1e3;    // 开启trace时最大仿真时间
 bool diff_uart = false; // 差分测试UART输出，检测MMIO访问是否正确
 bool axi_fast = false;  // 关闭性能测试时AXI延迟，用于加速Debug，不可用于跑分
 bool perf_once = false; // 性能测试只运行一次
+bool dump_msg = false; // 输出消息到文件中
+std::string filename = "output.txt"; // 输出消息文件名
 
 unsigned int *pc;
 
@@ -186,7 +189,12 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
     uint64_t count = 1;
     uint32_t last_pc = 0;
 
+    std::ofstream fout(dump_msg ? filename : "/dev/null");
+
+    assert(fout.is_open());
+
     printf("==================ticks===================\n");
+    fout << "==================ticks===================\n";
     for (int test=test_start;test<=test_end && running;test++) {
         bool test_end = false;
         confreg.set_switch(test);
@@ -230,20 +238,30 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
         if (trace_on) vcd.close();
         int num = confreg.get_num();
         printf("%x\n", num);
+        fout << num << "\n";
         dut_scores[test-1] = num;
     }
     top->final();
     double mulscores = 1;
     printf("==================scores===================\n");
+    fout << "==================scores===================\n";
     for (int test = test_start; test <= test_end; test++) {
         printf("%.3f\n", ref_scores[test-1] * 1.0 / dut_scores[test-1]);
+        fout << ref_scores[test-1] * 1.0 / dut_scores[test-1] << "\n";
         mulscores *= ref_scores[test-1] * 1.0 / dut_scores[test-1];
     }
-    if (test_end) printf("scores = %.3f\n", std::pow(mulscores, 0.1));
+    if (test_end) {
+        printf("scores = %.3f\n", std::pow(mulscores, 0.1));
+        fout << "scores = " << std::pow(mulscores, 0.1) << "\n";
+    }
     printf("=================IPC=====================\n");
     printf("total insts = %lu\n", count);
     printf("total ticks = %lu\n", ticks);
     printf("IPC = %.3f\n", count * 1.0 / ticks);
+    fout << "=================IPC=====================\n";
+    fout << "total insts = " << count << "\n";
+    fout << "total ticks = " << ticks << "\n";
+    fout << "IPC = " << count * 1.0 / ticks << "\n";
 }
 
 void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1, int test_end = 10) {
@@ -411,6 +429,12 @@ int main(int argc, char** argv, char** env) {
         }
         else if (strcmp(argv[i],"-perfonce") == 0) {
             perf_once = true;
+        }
+        else if (strcmp(argv[i],"-dump-msg") == 0) {
+            dump_msg = true;
+        }
+        else if (strcmp(argv[i],"-file") == 0) {
+            filename = argv[++i];
         }
     }
 
