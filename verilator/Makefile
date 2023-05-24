@@ -11,7 +11,7 @@ func: obj_dir/V$(TOP_NAME)
 	./obj_dir/Vmycpu_top -func
 
 perf: obj_dir/V$(TOP_NAME)
-	./obj_dir/Vmycpu_top -perf > output.txt
+	@./obj_dir/Vmycpu_top -perf 3>&2 2>&1 1>&3 | tee output.txt
 	cat output.txt
 
 perfdiff: obj_dir/V$(TOP_NAME)
