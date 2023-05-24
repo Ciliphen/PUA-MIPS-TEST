@@ -18,6 +18,7 @@
 #include <csignal>
 #include <sstream>
 #include <fstream>
+#include <iomanip>
 
 void connect_wire(axi4_ptr <32,32,4> &mmio_ptr, Vmycpu_top *top) {
     // connect
@@ -238,7 +239,7 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
         if (trace_on) vcd.close();
         int num = confreg.get_num();
         printf("%x\n", num);
-        fout << num << "\n";
+        fout << std::hex << num << "\n";
         dut_scores[test-1] = num;
     }
     top->final();
@@ -247,12 +248,12 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
     fout << "==================scores===================\n";
     for (int test = test_start; test <= test_end; test++) {
         printf("%.3f\n", ref_scores[test-1] * 1.0 / dut_scores[test-1]);
-        fout << ref_scores[test-1] * 1.0 / dut_scores[test-1] << "\n";
+        fout << std::fixed << std::setprecision(3) <<  ref_scores[test-1] * 1.0 / dut_scores[test-1] << "\n";
         mulscores *= ref_scores[test-1] * 1.0 / dut_scores[test-1];
     }
     if (test_end) {
         printf("scores = %.3f\n", std::pow(mulscores, 0.1));
-        fout << "scores = " << std::pow(mulscores, 0.1) << "\n";
+        fout << "scores = " << std::fixed << std::setprecision(3) << std::pow(mulscores, 0.1) << "\n";
     }
     printf("=================IPC=====================\n");
     printf("total insts = %lu\n", count);
@@ -261,7 +262,7 @@ void perf_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1,
     fout << "=================IPC=====================\n";
     fout << "total insts = " << count << "\n";
     fout << "total ticks = " << ticks << "\n";
-    fout << "IPC = " << count * 1.0 / ticks << "\n";
+    fout << "IPC = " << std::fixed << std::setprecision(3) << count * 1.0 / ticks << "\n";
 }
 
 void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_start = 1, int test_end = 10) {
