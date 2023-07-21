@@ -136,7 +136,7 @@ void func_run(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref) {
                 printf("Number %d Functional Test Point PASS!\n", test_point>>24);
             }
         }
-        if (top->aclk) running = confreg.do_trace(top->debug_wb_pc,top->debug_wb_rf_wen,top->debug_wb_rf_wnum,top->debug_wb_rf_wdata);
+        running = confreg.do_trace(top->debug_wb_pc,top->debug_wb_rf_wen,top->debug_wb_rf_wnum,top->debug_wb_rf_wdata);
         if (top->debug_wb_pc == 0xbfc00100u) running = false;
         if (trace_on) {
             vcd.dump(ticks);
