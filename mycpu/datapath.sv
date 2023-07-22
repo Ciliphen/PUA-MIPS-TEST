@@ -109,15 +109,8 @@ wire            W_master_reg_wen,W_slave_reg_wen;
 wire [31:0]     E_cp0_rdata;
 wire            M_cp0_jump;
 wire [31:0]     M_cp0_jump_pc;
-// dtlb
-/*
-wire [31:13]    dtlb_vpn2;
-wire            dtlb_found;
-tlb_entry       dtlb_entry;
-*/
 // ===== F =====
 wire            F_pc_except;
-wire            pc_en;
 // ===== D =====
 wire            D_cp0_useable;
 wire            D_kernel_mode;
@@ -157,11 +150,7 @@ wire [31:0]     D_master_rt_value,D_slave_rt_value;
 wire [4:0]      D_master_reg_waddr,D_slave_reg_waddr;
 except_bus      D_master_except,D_slave_except;
 // ===== E =====
-/*
-wire            E_mem_writeable;
-wire            E_tlb_refill;
-wire            E_tlb_invalid;
-*/
+
 wire            E_master_exp_trap;
 wire [3 :0]     E_master_branch_type;
 wire [3 :0]     E_master_trap_type;
@@ -275,74 +264,70 @@ assign F_pc_except = (|F_pc[1:0]); // 必须是2'b00
 assign inst_sram_en =  !(rst | fifo_full);
 assign stallF = ~F_ena;
 assign stallM = ~M_ena;
-assign pc_en = F_ena | M_cp0_jump; // 异常的优先级最高，必须使能
 
-pc_reg u_pc_reg(
+FetchStage u_pc_reg(
     //ports
-    .clk                      ( clk                      ),
-    .rst                      ( rst                      ),
-    .pc_en                    ( pc_en                    ),
-    .M_except                 ( M_cp0_jump               ),
-    .M_except_addr            ( M_cp0_jump_pc            ),
-    .M_flush_all              ( M_master_flush_all       ),
-    .M_flush_all_addr         ( M_master_pc_plus4        ),
-    .E_bj                     ( E_master_bj              ),
-    .E_bj_target              ( E_master_bj_target       ),
-    .D_bj                     ( D_master_bj              ),
-    .D_bj_target              ( D_master_bj_target       ),
-    .D_fifo_full              ( fifo_full                ),
-    .F_inst_data_ok1          ( inst_data_ok1            ),
-    .F_inst_data_ok2          ( inst_data_ok2            ),
-    .pc_next                  ( F_pc_next                ),
-    .pc_curr                  ( F_pc                     )
+    .clock                      ( clk                      ),
+    .reset                      ( rst                      ),
+    .io_memory_ex                 ( M_cp0_jump               ),
+    .io_memory_ex_pc            ( M_cp0_jump_pc            ),
+    .io_memory_flush              ( M_master_flush_all       ),
+    .io_memory_flush_pc         ( M_master_pc_plus4        ),
+    .io_execute_branch                     ( E_master_bj              ),
+    .io_execute_target              ( E_master_bj_target       ),
+    .io_decoder_branch                     ( D_master_bj              ),
+    .io_decoder_target              ( D_master_bj_target       ),
+    .io_instBuffer_full              ( fifo_full                ),
+    .io_iCache_inst_valid_0          ( inst_data_ok1            ),
+    .io_iCache_inst_valid_1          ( inst_data_ok2            ),
+    .io_iCache_pc_next                  ( F_pc_next                ),
+    .io_iCache_pc                  ( F_pc                     )
 );
-
 assign E_next_pc8  = E_slave_is_in_delayslot | D_master_is_in_delayslot;
 assign delay_sel_rst =  E_master_bj ? !E_next_pc8  :
                         D_master_bj ? !D_slave_ena :
                         1'b0;  // 防止两个女人一台戏！
-inst_fifo u_inst_fifo(
+
+InstBuffer u_inst_fifo(
     //ports
-    .clk                          ( clk                    ),
-    .rst                          ( rst                    ),
-    .fifo_rst                     ( rst | D_flush          ), // TODO: fix fence_iE
-    .flush_delay_slot             ( delay_slot_flush       ),
-    .D_ena                        ( D_ena                  ),
-    .i_stall                      ( i_stall                ),
-    .master_is_branch             ( D_master_is_bj         ), // D阶段的branch
-    .delay_sel_rst                ( delay_sel_rst          ),
-    .D_delay_rst                  ( D_master_bj            ), // D: next_master_is_in_delayslot
-    .E_delay_rst                  ( E_master_bj            ), // D: master_is_in_delayslot
+    .clock                          ( clk                    ),
+    .reset                          ( rst                    ),
+    .io_fifo_rst                     ( rst | D_flush          ), // TODO: fix fence_iE
+    .io_flush_delay_slot             ( delay_slot_flush       ),
+    .io_D_ena                        ( D_ena                  ),
+    .io_i_stall                      ( i_stall                ),
+    .io_master_is_branch             ( D_master_is_bj         ), // D阶段的branch
+    .io_delay_sel_rst                ( delay_sel_rst          ),
+    .io_D_delay_rst                  ( D_master_bj            ), // D: next_master_is_in_delayslot
+    .io_E_delay_rst                  ( E_master_bj            ), // D: master_is_in_delayslot
     
-    .read_en1                     ( D_ena                  ),
-    .read_en2                     ( D_slave_ena            ), // D阶段的发射结果
-    .read_tlb_refill1             ( D_master_tlb_refill    ),
-    .read_tlb_refill2             ( D_slave_tlb_refill     ),
-    .read_tlb_invalid1            ( D_master_tlb_invalid   ),
-    .read_tlb_invalid2            ( D_slave_tlb_invalid    ),
-    .read_address1                ( D_master_pc            ),
-    .read_address2                ( D_slave_pc             ),
-    .read_data1                   ( D_master_inst          ),
-    .read_data2                   ( D_slave_inst           ),
+    .io_read_en_0                     ( D_ena                  ),
+    .io_read_en_1                     ( D_slave_ena            ), // D阶段的发射结果
+    .io_read_0_tlb_refill             ( D_master_tlb_refill    ),
+    .io_read_1_tlb_refill             ( D_slave_tlb_refill     ),
+    .io_read_0_tlb_invalid            ( D_master_tlb_invalid   ),
+    .io_read_1_tlb_invalid            ( D_slave_tlb_invalid    ),
+    .io_read_0_addr                ( D_master_pc            ),
+    .io_read_1_addr                ( D_slave_pc             ),
+    .io_read_0_data                   ( D_master_inst          ),
+    .io_read_1_data                   ( D_slave_inst           ),
     
-    .write_en1                    ( inst_data_ok1          ),
-    .write_en2                    ( inst_data_ok2          ),
-    .write_tlb_refill1            ( inst_tlb_refill        ),
-    .write_tlb_refill2            ( inst_tlb_refill        ),
-    .write_tlb_invalid1           ( inst_tlb_invalid       ),
-    .write_tlb_invalid2           ( inst_tlb_invalid       ),
-    .write_address1               ( F_pc                   ),
-    .write_address2               ( F_pc + 32'd4           ),
-    .write_data1                  ( inst_rdata1            ),
-    .write_data2                  ( inst_rdata2            ),
+    .io_write_en_0                    ( inst_data_ok1          ),
+    .io_write_en_1                    ( inst_data_ok2          ),
+    .io_write_0_tlb_refill            ( inst_tlb_refill        ),
+    .io_write_1_tlb_refill            ( inst_tlb_refill        ),
+    .io_write_0_tlb_invalid           ( inst_tlb_invalid       ),
+    .io_write_1_tlb_invalid           ( inst_tlb_invalid       ),
+    .io_write_0_addr               ( F_pc                   ),
+    .io_write_1_addr               ( F_pc + 32'd4           ),
+    .io_write_0_data                  ( inst_rdata1            ),
+    .io_write_1_data                  ( inst_rdata2            ),
     
-    .master_is_in_delayslot_o     (D_master_is_in_delayslot),
-    .empty                        ( fifo_empty             ),
-    .almost_empty                 ( fifo_almost_empty      ),
-    .full                         ( fifo_full              )
+    .io_master_is_in_delayslot_o     (D_master_is_in_delayslot),
+    .io_empty                        ( fifo_empty             ),
+    .io_almost_empty                 ( fifo_almost_empty      ),
+    .io_full                         ( fifo_full              )
 );
-
-
 // ====================================== Decode ======================================
 assign D_master_except = '{
     default     : '0,
@@ -451,20 +436,20 @@ assign D_master_is_bj = D_master_is_branch | D_master_is_jump;
 assign D_master_bj = D_master_pred_take | D_master_jump_take;
 assign D_master_bj_target = {32{ D_master_pred_take}} & D_master_branch_target | 
                             {32{!D_master_pred_take}} & D_master_jump_target   ;
-branch_predict u_branch_predict(
+BPU u_branch_predict(
     //ports
-    .clk                    ( clk                    ),
-    .rst                    ( rst                    ),
-    .enaD                   ( D_ena                  ),
-    .instrD                 ( D_master_inst          ),
-    .pcD                    ( D_master_pc            ),
-    .pc_plus4D              ( D_master_pc_plus4      ),
-    .pcE                    ( E_master_pc            ),
-    .branchE                ( E_master_is_branch     ),
-    .actual_takeE           ( E_master_actual_take   ),
-    .branchD                ( D_master_is_branch     ),
-    .pred_takeD             ( D_master_pred_take     ),
-    .branch_targetD         ( D_master_branch_target )
+    .clock                    ( clk                    ),
+    .reset                    ( rst                    ),
+    .io_enaD                   ( D_ena                  ),
+    .io_instrD                 ( D_master_inst          ),
+    .io_pcD                    ( D_master_pc            ),
+    .io_pc_plus4D              ( D_master_pc_plus4      ),
+    .io_pcE                    ( E_master_pc            ),
+    .io_branchE                ( E_master_is_branch     ),
+    .io_actual_takeE           ( E_master_actual_take   ),
+    .io_branchD                ( D_master_is_branch     ),
+    .io_pred_takeD             ( D_master_pred_take     ),
+    .io_branch_targetD         ( D_master_branch_target )
 );
 jump_judge u_jump_judge(
     //ports
@@ -535,9 +520,6 @@ forward_top u_forward_top(
     .alu_wen4                   ( M_master_reg_wen            ),
     .alu_waddr4                 ( M_master_reg_waddr        ),
     .alu_wdata4                 ( M_master_reg_wdata        ),
-    // .memtoReg                    ( M1cs.mem_write_reg        ),
-    // .mem_waddr                   ( M_master_reg_waddr        ),
-    // .mem_rdata                   ( M_master_mem_rdata        ),
     .master_rs                  ( D_master_rs               ),
     .master_rs_value_tmp        ( D_master_rs_value_tmp     ),
     .master_rs_value            ( D_master_rs_value         ),
@@ -554,7 +536,6 @@ forward_top u_forward_top(
 
 // ====================================== Execute ======================================
 wire D2E_clear1,D2E_clear2;
-// wire [31:0] E_master_rs_value_tmp,E_master_rt_value_tmp,E_slave_rs_value_tmp,E_slave_rt_value_tmp;
 // 在使能的情况下跳转清空才成立
 assign D2E_clear1 = M_cp0_jump | M_master_flush_all | (!D_master_is_in_delayslot & E_flush & E_ena) | (!D_ena & E_ena);
 assign D2E_clear2 = M_cp0_jump | M_master_flush_all | (E_flush & D_slave_ena) || (E_ena & !D_slave_ena);
@@ -658,13 +639,7 @@ assign E_master_except = '{
     ex_ov       : E_master_overflow,
     ex_adel     : E_master_mem_adel,
     ex_ades     : E_master_mem_ades
-    /*
-    ex_tlbl     : (E_tlb_invalid | E_tlb_refill) & mem_read_enE & E1cs.mem_en,
-    ex_tlbs     : (E_tlb_invalid | E_tlb_refill) & mem_write_enE & E1cs.mem_en,
-    ex_tlbm     : !E_mem_writeable & mem_write_enE & E1cs.mem_en,
-    ex_tlbrf    : E_tlb_refill & E1cs.mem_en,
-    ex_trap     : E_master_exp_trap & E1cs.mem_en
-     */
+
 };
 assign E_slave_except = '{
     default     : '0,
@@ -680,12 +655,7 @@ assign E_slave_except = '{
     ex_ov       : E_slave_overflow,
     ex_adel     : E_slave_mem_adel,
     ex_ades     : E_slave_mem_ades
-    /*
-    ex_tlbl     : (E_tlb_invalid | E_tlb_refill) & mem_read_enE & E2cs.mem_en,
-    ex_tlbs     : (E_tlb_invalid | E_tlb_refill) & mem_write_enE & E2cs.mem_en,
-    ex_tlbm     : !E_mem_writeable & mem_write_enE & E2cs.mem_en,
-    ex_tlbrf    : E_tlb_refill & E2cs.mem_en
-     */
+
 };
 
 assign E_mem_va = mem_addrE;
@@ -917,27 +887,7 @@ assign M_slave_except = '{
 
 assign M_master_pc_plus4 = M_master_pc + 32'd4;
 assign M_master_flush_all = M1cs.flush_all & M_ena;
-/*
-d_tlb dtlb_inst(
-    .clk                ( clk               ),
-    .rst                ( rst               ),
-    .E_mem_en           ( mem_enE           ),
-    .E_mem_va           ( mem_addrE         ),
-    .E_mem_pa           ( E_mem_pa          ),
-    .E_mem_uncached     ( E_mem_uncached    ),
-    .E_mem_writeable    ( E_mem_writeable   ),
-    .E_tlb_refill       ( E_tlb_refill      ),
-    .E_tlb_invalid      ( E_tlb_invalid     ),
-    // to hazard
-    .E_ready_go         ( M_ena             ),
-    .E_dtlb_stall       ( E_dtlb_stall      ),
-    // to l2 tlb
-    .dtlb_vpn2          ( dtlb_vpn2         ),
-    .dtlb_found         ( dtlb_found        ),
-    .fence_tlb          ( fence_tlbE        ),
-    .dtlb_entry         ( dtlb_entry        )
-);
-*/
+
 mem_access u_mem_access(
     //ports
     .mem_en                 ( mem_enM                   ),

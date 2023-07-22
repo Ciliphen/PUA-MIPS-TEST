@@ -1,0 +1,6 @@
+{
+  "verilog.linting.verilator.useWSL": true,
+  "files.watcherExclude": {
+    "**/target": true
+  }
+}

@@ -339,7 +339,7 @@ void cemu_perf_diff(Vmycpu_top *top, axi4_ref <32,32,4> &mmio_ref, int test_star
                 sim_time --;
             }
             // trace with cemu {
-            if (top->aclk && top->debug_wb_rf_wen && top->debug_wb_rf_wnum) {
+            if (top->debug_wb_rf_wen && top->debug_wb_rf_wnum) {
                 do {
                     cemu_mips.step();
                     cemu_confreg.tick();
