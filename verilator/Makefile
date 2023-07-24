@@ -17,7 +17,7 @@ perfdiff: obj_dir/V$(TOP_NAME)
 	./obj_dir/Vmycpu_top -perfdiff
 
 trace: obj_dir/V$(TOP_NAME)
-	./obj_dir/Vmycpu_top -func -trace 10000
+	./obj_dir/Vmycpu_top -func -trace 100000
 
 clean:
 	rm -rf obj_dir
