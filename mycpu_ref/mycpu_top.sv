@@ -166,7 +166,7 @@ module mycpu_top (
         .F_pc_next         		( pc_next_dp         		),
         .inst_data_ok1     		( inst_data_ok1     		),
         .inst_data_ok2     		( inst_data_ok2     		),
-        .inst_tlb_refill        ( inst_tlb_refill           ),
+        .inst_tlb_refill        ( 1'b0           ),
         .inst_tlb_invalid       ( inst_tlb_invalid          ),
         .inst_rdata1       		( inst_rdata1       		),
         .inst_rdata2       		( inst_rdata2       		),
@@ -221,7 +221,6 @@ module mycpu_top (
         .io_inst_inst_1        ( inst_rdata2   ),
         .io_inst_inst_valid_0           ( inst_data_ok1 ),
         .io_inst_inst_valid_1           ( inst_data_ok2 ),
-        .io_inst_tlb1_refill    (inst_tlb_refill  ),
         .io_inst_tlb1_invalid   (inst_tlb_invalid ),
         .io_inst_cpu_stall             ( stallF        ),
         .io_inst_icache_stall             ( i_cache_stall ),
@@ -313,4 +312,5 @@ module mycpu_top (
         .io_axi_b_valid          (bvalid),
         .io_axi_b_ready          (bready)
     );
+  //
 endmodule
