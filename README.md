@@ -1,4 +1,4 @@
-# PUA_CPU_CDE_AXI
+# PUA-MIPS-TEST
 
 ## 简介
 
