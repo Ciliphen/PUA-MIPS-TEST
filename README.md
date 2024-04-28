@@ -17,3 +17,7 @@ git clone https://github.com/Ciliphen/PUA-MIPS-TEST
 1. 处于 PUA-MIPS-TEST/verilator 目录下运行对应的 makefile 脚本，如`make func`
 
 2. 处于 PUA-MIPS/chisel 目录下运行对应的 makefile 脚本，如`make func`
+
+---
+
+项目修改自 [SoC-Simulator](https://github.com/cyyself/soc-simulator)
